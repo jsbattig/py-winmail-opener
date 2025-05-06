@@ -29,6 +29,11 @@ winmail_opener.applescript
 .vscode/
 *.sublime-*
 
+# Exception for GitHub workflows
+!.github/
+!.github/**/
+!.github/**/*.yml
+
 # Runtime files
 *.tmp
 /tmp/
