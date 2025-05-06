@@ -18,7 +18,7 @@ class PyWinmailOpener < Formula
     # Create a wrapper script in bin
     (bin/"winmail-opener").write <<~EOS
       #!/bin/bash
-      "#{Formula["python@3.10"].opt_bin}/python3" "#{libexec}/winmail_opener.py" "$@"
+      "/usr/local/bin/python3.10" "#{libexec}/winmail_opener.py" "$@"
     EOS
     
     # Make the wrapper executable
@@ -26,8 +26,10 @@ class PyWinmailOpener < Formula
   end
 
   def post_install
-    # Run the install.py script with the correct paths in homebrew mode
-    system Formula["python@3.10"].opt_bin/"python3", "#{libexec}/install.py", "--homebrew-mode"
+    # Skip app creation for Homebrew installs to avoid permission errors
+    puts "Note: The WinmailOpener.app was not created automatically to avoid permission errors."
+    puts "To create the app manually, run the following command:"
+    puts "  /usr/local/bin/python3.10 #{libexec}/install.py"
   end
 
   test do
