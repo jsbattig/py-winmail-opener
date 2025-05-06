@@ -247,9 +247,8 @@ def test_app_bundle():
     sample_path = None
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
-    # Look for test files
+    # Look for test file
     possible_samples = [
-        os.path.join(current_dir, "test_files", "dummy.dat"),
         os.path.join(os.path.dirname(current_dir), "test_winmail.dat")
     ]
     

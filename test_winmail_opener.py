@@ -22,7 +22,8 @@ class TestWinmailOpener(unittest.TestCase):
         # For now, we'll just check that the extract_winmail_dat function doesn't raise an exception
         # when tkinter is not available.
         try:
-            extract_winmail_dat("py-winmail-opener/test_files/dummy.dat", "py-winmail-opener/output")
+            # Use the parent directory test file instead of test_files/dummy.dat
+            extract_winmail_dat(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "test_winmail.dat"), "py-winmail-opener/output")
         except Exception as e:
             self.fail(f"extract_winmail_dat raised an exception: {e}")
 
