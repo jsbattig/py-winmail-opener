@@ -1,5 +1,10 @@
 name: Update Homebrew Tap
 
+# This workflow requires a repository secret named HOMEBREW_TAP_TOKEN
+# Go to Settings > Secrets and variables > Actions > New repository secret
+# Name it HOMEBREW_TAP_TOKEN and use a personal access token with repo scope
+# The token needs write access to the homebrew-winmail repository
+
 on:
   release:
     types: [published]
