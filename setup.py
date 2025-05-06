@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="winmail_opener",
-    version="0.1.0",
+    version="1.0.0",
     author="jsbattig",
     author_email="your.email@example.com",  # Replace with a valid email
     description="A simple command-line tool to extract attachments from Winmail.dat files.",

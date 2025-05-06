@@ -2,12 +2,18 @@
 
 **Current Work Focus:**
 
+*   Creating a Homebrew package for easier distribution and installation.
 *   Consolidating the installation and file association approaches into a single, security-friendly solution.
 *   Streamlining the README and installation process.
 *   Removing unnecessary files and approaches while maintaining the core functionality.
 
 **Recent Changes:**
 
+*   Created a Homebrew formula (`py-winmail-opener.rb`) for package distribution.
+*   Added Homebrew installation instructions to the README.
+*   Modified the `install.py` script to work in Homebrew mode with system Python.
+*   Updated version to 1.0.0 for the first stable release.
+*   Added `--version` flag to the CLI for easier version checking and Homebrew testing.
 *   Completely rewrote the `install.py` script to integrate the security-friendly AppleScript approach.
 *   Simplified the README file to focus on the consolidated installation process.
 *   Created a clean, consolidated installation process that:

@@ -6,6 +6,7 @@ import plistlib
 import shutil
 import tempfile
 import time
+import argparse
 
 def create_virtual_environment():
     """
@@ -282,6 +283,14 @@ def main():
     """
     Main function to install dependencies and create the application.
     """
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Install WinmailOpener")
+    parser.add_argument("--homebrew-mode", action="store_true", 
+                        help="Run in Homebrew mode with modified paths")
+    args = parser.parse_args()
+    
+    homebrew_mode = args.homebrew_mode
+    
     print("=== WinmailOpener Installation ===")
     print("This script will:")
     print("1. Create a virtual environment and install dependencies")
@@ -289,14 +298,24 @@ def main():
     print("3. Register the application as the default handler for .dat files")
     print()
     
-    # Create a virtual environment and install dependencies
-    venv_python = create_virtual_environment()
-    if not venv_python:
-        print("Failed to create a virtual environment. The application may not work correctly.")
-        response = input("Do you want to continue with the installation? (y/n): ")
-        if response.lower() != 'y':
-            print("Installation aborted.")
-            return
+    if homebrew_mode:
+        print("Running in Homebrew mode")
+        # In Homebrew mode, we use the system Python that Homebrew installed
+        venv_python = sys.executable
+    else:
+        # Create a virtual environment and install dependencies
+        venv_python = create_virtual_environment()
+        if not venv_python:
+            print("Failed to create a virtual environment. The application may not work correctly.")
+            if not homebrew_mode:
+                response = input("Do you want to continue with the installation? (y/n): ")
+                if response.lower() != 'y':
+                    print("Installation aborted.")
+                    return
+            else:
+                # In Homebrew mode, continue without asking
+                print("Continuing with system Python...")
+                venv_python = sys.executable
     
     # Create the AppleScript handler application
     print("\nCreating AppleScript handler application...")
@@ -306,8 +325,9 @@ def main():
         print("\nFailed to create AppleScript handler application.")
         return
     
-    # Test the app bundle
-    test_app_bundle()
+    # Test the app bundle if not in Homebrew mode (avoid during package build)
+    if not homebrew_mode:
+        test_app_bundle()
     
     print("\nInstallation complete!")
     print("To finalize setup, please right-click on a winmail.dat file,")

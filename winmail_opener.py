@@ -4,6 +4,9 @@ import argparse  # Used for parsing command-line arguments
 import subprocess  # Used for opening the email body with the default text editor
 import logging  # Used for logging debug information
 
+# Version information - keep in sync with setup.py
+__version__ = "1.0.0"
+
 # Configure logging first before any imports that might use it
 logging.basicConfig(
     level=logging.DEBUG,
@@ -125,6 +128,7 @@ def main():
     parser = argparse.ArgumentParser(description="Extract attachments and email body from Winmail.dat files.")  # Create an argument parser
     parser.add_argument("winmail_dat_file", nargs='?', help="Path to the Winmail.dat file.")  # Add an argument for the Winmail.dat file path
     parser.add_argument("--file", help="Alternative way to specify the Winmail.dat file path (for use with Open With)")
+    parser.add_argument("--version", action="version", version=f"winmail_opener {__version__}")
     
     # Try to parse args, but don't exit on error
     try:

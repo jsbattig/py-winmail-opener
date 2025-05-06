@@ -2,7 +2,7 @@
 
 ## Current Status
 
-The project is now in a stable, consolidated state with a single installation approach.
+The project is now in a stable, consolidated state with a single installation approach, and a Homebrew formula has been created for easier distribution.
 
 ### What Works
 
@@ -12,6 +12,7 @@ The project is now in a stable, consolidated state with a single installation ap
 - ✅ Email body is extracted and opened with TextEdit.app
 - ✅ File associations are set up automatically (if duti is available) or can be set manually
 - ✅ The application works without triggering security warnings
+- ✅ Homebrew formula enables one-command installation (`brew install py-winmail-opener`)
 
 ### Evolution of Project Approach
 
