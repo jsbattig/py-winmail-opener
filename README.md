@@ -8,7 +8,9 @@ A utility to extract attachments and email body from Winmail.dat files on macOS.
 * Opens email body with TextEdit.app
 * Uses a simple, security-friendly AppleScript approach for file associations
 
-## Installation
+## Installation and Uninstallation
+
+### Installation
 
 ```
 # Install dependencies and create application bundle
@@ -20,6 +22,30 @@ The installer will:
 2. Install required packages (tnefparse, chardet)
 3. Create a security-friendly AppleScript application in your ~/Applications folder
 4. Set up the file association with .dat files if possible
+
+### Uninstallation
+
+If you need to remove the application completely:
+
+```
+# Remove the application and all associated components
+python py-winmail-opener/uninstall.py
+```
+
+The uninstaller will:
+1. Remove the application from ~/Applications
+2. Reset file associations for .dat files
+3. Clean up handler scripts and log files
+4. Remove the virtual environment
+
+Uninstaller options:
+```
+# Keep the virtual environment (useful for development)
+python py-winmail-opener/uninstall.py --keep-venv
+
+# Keep log files for troubleshooting
+python py-winmail-opener/uninstall.py --keep-logs
+```
 
 ### Setting Up File Associations
 
