@@ -147,6 +147,24 @@ python py-winmail-opener/test_winmail_opener.py
 
 ## For Developers
 
+### GitHub Actions Automation
+
+This project includes a GitHub Actions workflow that automatically updates the Homebrew formula when you create a new release. The workflow:
+
+1. Triggers when a new release is published on GitHub
+2. Downloads the release tarball
+3. Calculates the SHA256 checksum
+4. Updates the formula in the homebrew-winmail repository
+5. Commits and pushes the changes
+
+To set this up:
+
+1. Create a Personal Access Token with `repo` scope
+2. Add it as a repository secret named `HOMEBREW_TAP_TOKEN` in your GitHub repository settings
+3. Ensure the token has write access to the homebrew-winmail repository
+
+Once configured, the Homebrew formula will be automatically updated whenever you create a new release.
+
 ### Creating a Release
 
 To create a new release for use with Homebrew:

@@ -1,0 +1,42 @@
+name: Update Homebrew Tap
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-homebrew-formula:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout homebrew-winmail repository
+        uses: actions/checkout@v3
+        with:
+          repository: jsbattig/homebrew-winmail
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-winmail
+      
+      - name: Set up environment variables
+        run: |
+          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+      
+      - name: Download release tarball and calculate checksum
+        run: |
+          curl -L https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/${{ env.TAG_NAME }}.tar.gz -o release.tar.gz
+          echo "SHA256=$(shasum -a 256 release.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
+      
+      - name: Update formula
+        run: |
+          cd homebrew-winmail
+          sed -i "s|url \".*\"|url \"https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/${{ env.TAG_NAME }}.tar.gz\"|" py-winmail-opener.rb
+          sed -i "s|sha256 \".*\"|sha256 \"${{ env.SHA256 }}\"|" py-winmail-opener.rb
+          sed -i "s|\"winmail_opener .*\"|\"winmail_opener ${{ env.VERSION }}\"|" py-winmail-opener.rb
+      
+      - name: Commit and push changes
+        run: |
+          cd homebrew-winmail
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add py-winmail-opener.rb
+          git commit -m "Update formula for py-winmail-opener ${{ env.TAG_NAME }}"
+          git push
