@@ -1,0 +1,41 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# macOS specific files
+.DS_Store
+*.icns
+
+# Generated files
+output/
+*.log
+winmail_handler.sh
+winmail_opener.applescript
+
+# Development environment
+.idea/
+.vscode/
+*.sublime-*
+
+# Runtime files
+*.tmp
+/tmp/
+
+# Personal customization
+*.orig
+*.rej
+*.swp
+*.bak
+*~
