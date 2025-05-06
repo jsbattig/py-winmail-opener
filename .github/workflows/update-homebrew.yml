@@ -3,6 +3,12 @@ name: Update Homebrew Tap
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name to use (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
 
 jobs:
   update-homebrew-formula:
@@ -17,8 +23,14 @@ jobs:
       
       - name: Set up environment variables
         run: |
-          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+            TAG_INPUT="${{ github.event.inputs.tag_name }}"
+            echo "VERSION=${TAG_INPUT#v}" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+          fi
       
       - name: Download release tarball and calculate checksum
         run: |
