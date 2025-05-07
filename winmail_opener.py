@@ -3,6 +3,8 @@ import sys  # Used for accessing command line arguments
 import argparse  # Used for parsing command-line arguments
 import subprocess  # Used for opening the email body with the default text editor
 import logging  # Used for logging debug information
+import datetime  # Used for formatting dates
+import re  # Used for RTF conversion
 
 # Version information - keep in sync with setup.py
 __version__ = "1.0.10"
@@ -52,57 +54,83 @@ except ImportError:
 def extract_winmail_dat(winmail_dat_file):
     """
     Extracts attachments and email body from a Winmail.dat file.
+    Displays content as HTML with metadata and attachment links.
     """
     logging.debug(f"Starting extraction for file: {winmail_dat_file}")
     
     try:
-        # Make sure the file exists and is readable
+        # Validate file
         if not os.path.exists(winmail_dat_file):
             error_msg = f"File does not exist: {winmail_dat_file}"
             logging.error(error_msg)
             print(error_msg)
             return
-            
+        
+        # Parse the winmail.dat file
         logging.debug(f"Opening file: {winmail_dat_file}")
         with open(winmail_dat_file, 'rb') as tnef_file:
             file_content = tnef_file.read()
             logging.debug(f"Read {len(file_content)} bytes from file")
-            tnef = tnefparse.TNEF(file_content)  # Parse the Winmail.dat file using tnefparse
-
+            
+            # Check if file is empty
+            if len(file_content) == 0:
+                error_msg = f"Error: The file {winmail_dat_file} is empty"
+                logging.error(error_msg)
+                print(error_msg)
+                return
+            
+            try:
+                tnef = tnefparse.TNEF(file_content)
+            except Exception as e:
+                error_msg = f"Error: {winmail_dat_file} is not a valid TNEF (Winmail.dat) file"
+                logging.error(f"{error_msg}: {str(e)}")
+                print(f"{error_msg}: {str(e)}")
+                return
+        
         # Extract attachments to ~/Downloads
         output_dir = os.path.expanduser("~/Downloads")
         logging.debug(f"Using output directory: {output_dir}")
-        os.makedirs(output_dir, exist_ok=True)  # Create the output directory if it doesn't exist
-
-        # Log attachment count
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Track extracted attachments for link generation
+        extracted_attachments = []
         logging.debug(f"Found {len(tnef.attachments)} attachments")
         
         for attachment in tnef.attachments:
+            attachment_name = ""
             if isinstance(attachment.name, bytes):
-                # Detect the character encoding of the attachment name
-                encoding = chardet.detect(attachment.name)['encoding']
+                # Detect encoding and decode attachment name
+                encoding = chardet.detect(attachment.name)['encoding'] or 'utf-8'
                 try:
-                    attachment_path = os.path.join(output_dir, attachment.name.decode(encoding))  # Decode the attachment name using the detected encoding
-                    print(f"Extracted attachment: {attachment.name.decode(encoding)} to {output_dir}")
+                    attachment_name = attachment.name.decode(encoding)
                 except:
-                    attachment_path = os.path.join(output_dir, attachment.name.decode('utf-8', 'ignore'))  # If decoding fails, use utf-8 with ignore
-                    print(f"Extracted attachment: {attachment.name.decode('utf-8', 'ignore')} to {output_dir}")
+                    attachment_name = attachment.name.decode('utf-8', 'ignore')
             else:
-                attachment_path = os.path.join(output_dir, attachment.name)  # If the attachment name is not bytes, use it directly
-                print(f"Extracted attachment: {attachment.name} to {output_dir}")
+                attachment_name = attachment.name
+                
+            attachment_path = os.path.join(output_dir, attachment_name)
+            extracted_attachments.append({
+                'name': attachment_name,
+                'path': attachment_path,
+                'size': len(attachment.data),
+                'url': f"file://{attachment_path}"
+            })
+            
+            print(f"Extracted attachment: {attachment_name} to {output_dir}")
             with open(attachment_path, 'wb') as f:
-                f.write(attachment.data)  # Write the attachment data to the output file
-
-        # Extract email body and open with TextEdit
-        if tnef.body:
-            email_body = tnef.body
-            temp_file = "/tmp/email_body.txt"
-            with open(temp_file, "w", encoding="utf-8") as f:
-                f.write(email_body)
-            subprocess.call(["open", "-a", "TextEdit", temp_file])
-            print(f"Extracted email body and opened with TextEdit.")
-        else:
-            print("No email body found.")
+                f.write(attachment.data)
+        
+        # Create HTML content
+        html_content = create_html_view(tnef, extracted_attachments)
+        
+        # Save HTML to temporary file
+        temp_html_file = "/tmp/winmail_view.html"
+        with open(temp_html_file, "w", encoding="utf-8") as f:
+            f.write(html_content)
+        
+        # Open with default browser
+        subprocess.call(["open", temp_html_file])
+        print(f"Opened winmail.dat content in browser")
 
     except ValueError as e:
         # Handle ValueError which is what tnefparse raises for invalid TNEF files
@@ -113,6 +141,278 @@ def extract_winmail_dat(winmail_dat_file):
         print(f"OS error: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        logging.exception("Error in extract_winmail_dat")
+
+
+def create_html_view(tnef, attachments):
+    """
+    Creates an HTML representation of winmail.dat content including:
+    - Metadata (From, To, Subject, Date, etc.)
+    - Email body (converted from RTF if available)
+    - Attachment links
+    """
+    # CSS styling for a clean, modern look
+    css = """
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .metadata-item {
+            margin-bottom: 8px;
+        }
+        .metadata-label {
+            font-weight: bold;
+            color: #555;
+            width: 100px;
+            display: inline-block;
+        }
+        .body-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e1e4e8;
+        }
+        .attachments {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .attachment-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .attachment-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .attachment-item:last-child {
+            border-bottom: none;
+        }
+        .attachment-link {
+            text-decoration: none;
+            color: #0366d6;
+        }
+        .attachment-link:hover {
+            text-decoration: underline;
+        }
+        .attachment-size {
+            color: #666;
+            font-size: 0.9em;
+        }
+        h1 {
+            color: #24292e;
+            font-size: 24px;
+            font-weight: 600;
+            margin-top: 0;
+        }
+        h2 {
+            color: #24292e;
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 0;
+            border-bottom: 1px solid #eaecef;
+            padding-bottom: 8px;
+        }
+    </style>
+    """
+    
+    # Start building HTML
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winmail.dat Content</title>
+    {css}
+</head>
+<body>
+    <div class="header">
+        <h1>Email Content</h1>
+    """
+    
+    # Extract and display metadata
+    metadata = extract_metadata(tnef)
+    for key, value in metadata.items():
+        if value:  # Only display non-empty metadata
+            html += f'<div class="metadata-item"><span class="metadata-label">{key}:</span> {value}</div>\n'
+    
+    html += '</div>'  # Close header
+    
+    # Email body content
+    html += '<div class="body-container">'
+    
+    # Try to get RTF body first, then plain text if not available
+    if hasattr(tnef, 'rtfbody') and tnef.rtfbody:
+        # Convert RTF to HTML
+        body_html = convert_rtf_to_html(tnef.rtfbody)
+        html += f'<div>{body_html}</div>'
+    elif hasattr(tnef, 'body') and tnef.body:
+        # If no RTF, use plain text with simple formatting
+        if isinstance(tnef.body, bytes):
+            body_text = tnef.body.decode('utf-8', 'ignore')
+        else:
+            body_text = tnef.body
+        
+        # Format plain text for HTML display (preserve line breaks)
+        body_html = body_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        body_html = body_html.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
+        html += f'<div>{body_html}</div>'
+    else:
+        html += '<div><em>No email body content found</em></div>'
+    
+    html += '</div>'  # Close body container
+    
+    # Attachments section
+    html += """
+    <div class="attachments">
+        <h2>Attachments</h2>
+    """
+    
+    if attachments:
+        html += '<ul class="attachment-list">'
+        for attachment in attachments:
+            size_str = format_file_size(attachment['size'])
+            html += f"""
+            <li class="attachment-item">
+                <a href="{attachment['url']}" class="attachment-link">{attachment['name']}</a>
+                <span class="attachment-size"> ({size_str})</span>
+            </li>
+            """
+        html += '</ul>'
+    else:
+        html += '<p>No attachments found</p>'
+    
+    html += '</div>'  # Close attachments
+    
+    # Close HTML document
+    html += """
+</body>
+</html>
+    """
+    
+    return html
+
+
+def extract_metadata(tnef):
+    """Extract all available metadata from TNEF object"""
+    metadata = {}
+    
+    # Map TNEF attributes to human-readable labels
+    attribute_map = {
+        'subject': 'Subject',
+        'from': 'From',
+        'sender_name': 'Sender',
+        'message_id': 'Message ID',
+        'date_sent': 'Date Sent',
+        'date_received': 'Date Received',
+        'message_class': 'Message Class',
+        'priority': 'Priority',
+        'conversation_id': 'Conversation'
+    }
+    
+    # Try to extract common metadata values
+    if hasattr(tnef, 'subject'):
+        metadata['Subject'] = get_tnef_value(tnef.subject)
+    
+    # 'from' is a Python reserved keyword, need to use getattr
+    if hasattr(tnef, 'from'):
+        metadata['From'] = get_tnef_value(getattr(tnef, 'from'))
+    
+    if hasattr(tnef, 'date_sent'):
+        sent_date = get_tnef_value(tnef.date_sent)
+        if sent_date:
+            # Format date if it's a datetime object
+            if isinstance(sent_date, (datetime.datetime, datetime.date)):
+                sent_date = sent_date.strftime("%Y-%m-%d %H:%M:%S")
+            metadata['Date Sent'] = sent_date
+    
+    if hasattr(tnef, 'date_received'):
+        recv_date = get_tnef_value(tnef.date_received)
+        if recv_date and isinstance(recv_date, (datetime.datetime, datetime.date)):
+            metadata['Date Received'] = recv_date.strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Add any other available metadata from TNEF attributes
+    for attr in dir(tnef):
+        if attr.startswith('__') or attr in ('attachments', 'body', 'rtfbody', 'has_body'):
+            continue
+        
+        if attr in attribute_map and not attribute_map[attr] in metadata:
+            value = get_tnef_value(getattr(tnef, attr))
+            if value:
+                metadata[attribute_map[attr]] = value
+    
+    return metadata
+
+
+def get_tnef_value(value):
+    """Safely extract and decode TNEF attribute values"""
+    if value is None:
+        return None
+        
+    if isinstance(value, bytes):
+        try:
+            return value.decode('utf-8', 'ignore')
+        except:
+            return str(value)
+    
+    return str(value)
+
+
+def convert_rtf_to_html(rtf_data):
+    """Convert RTF content to HTML"""
+    # For initial implementation, we'll use a simple approach
+    # In a future version, we could integrate a more robust RTF-to-HTML converter
+    if isinstance(rtf_data, bytes):
+        try:
+            rtf_text = rtf_data.decode('utf-8', 'ignore')
+        except:
+            return "<pre>RTF content available but could not be converted</pre>"
+    else:
+        rtf_text = str(rtf_data)
+    
+    # Very basic RTF cleanup - remove RTF control sequences
+    # This is a minimal implementation - a more robust parser would be better
+    try:
+        # Strip RTF control sequences
+        cleaned_text = re.sub(r'\\[a-z]+[-]?[0-9]*', ' ', rtf_text)
+        cleaned_text = re.sub(r'[{}]', '', cleaned_text)
+        cleaned_text = re.sub(r'\\\'[0-9a-f]{2}', '', cleaned_text)
+        
+        # Replace line breaks
+        cleaned_text = cleaned_text.replace('\\par', '<br>')
+        
+        # Handle HTML entities
+        cleaned_text = cleaned_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        
+        return cleaned_text
+    except:
+        # If conversion fails, return the raw RTF in a pre tag
+        safe_rtf = rtf_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+        return f"<pre>{safe_rtf}</pre>"
+
+
+def format_file_size(size_bytes):
+    """Format file size in a human-readable way"""
+    if size_bytes < 1024:
+        return f"{size_bytes} bytes"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes/1024:.1f} KB"
+    else:
+        return f"{size_bytes/(1024*1024):.1f} MB"
 
 def main():
     """
