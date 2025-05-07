@@ -244,11 +244,15 @@ end run
     except:
         print("Warning: Could not update Launch Services database. This is not critical.")
     
-    # Create test file if it doesn't exist
-    test_path = os.path.expanduser("~/Desktop/test_winmail.dat")
-    if not os.path.exists(test_path):
-        with open(test_path, "w") as f:
-            f.write("This is a test winmail.dat file for testing file associations.")
+    # Create test file if it doesn't exist and not in Homebrew mode
+    if not homebrew_mode:
+        try:
+            test_path = os.path.expanduser("~/Desktop/test_winmail.dat")
+            if not os.path.exists(test_path):
+                with open(test_path, "w") as f:
+                    f.write("This is a test winmail.dat file for testing file associations.")
+        except Exception as e:
+            print(f"Note: Could not create test file (this is not critical): {e}")
     
     return True
 

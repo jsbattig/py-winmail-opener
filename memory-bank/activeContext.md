@@ -20,6 +20,10 @@
     * Fixed auto-release workflow to properly handle version string formats
     * Fixed update-homebrew workflow to trigger on release publication
     * Enhanced formula updating with robust syntax validation and more precise pattern matching
+*   Fixed Homebrew post-install script to skip test file creation:
+    * Removed attempt to create test file on Desktop when running in Homebrew mode
+    * Added better error handling for file operations
+    * Improved compatibility with Homebrew's sandboxed environment
 *   Created a clean, consolidated installation process that:
     * Creates a virtual environment with necessary dependencies
     * Creates a simple AppleScript application that directly calls a handler script
@@ -63,3 +67,4 @@
 *   Always validate the output of automated file changes, especially when dealing with code in different languages (like Ruby in Homebrew formulas).
 *   When modifying code in different languages (like Ruby formulas), it's critical to understand the complete syntax structure you're modifying. In our case, we needed to understand that `assert_match` in Ruby requires two parameters.
 *   Implementing fallback strategies for automated processes provides resilience. Our final update-homebrew workflow can detect and repair broken assert_match lines or add them if missing.
+*   Homebrew installations have restricted permissions and operate in a sandboxed environment, requiring different approaches than normal installations. In particular, file operations that work in normal mode (like creating files on the Desktop) may fail under Homebrew's permissions model.

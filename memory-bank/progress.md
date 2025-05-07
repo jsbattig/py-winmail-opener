@@ -15,6 +15,7 @@ The project is now in a stable, consolidated state with a single installation ap
 - ✅ Homebrew formula enables one-command installation (`brew install py-winmail-opener`)
 - ✅ GitHub Actions workflow for automated versioning and release creation
 - ✅ Automatic Homebrew formula updates on new releases via GitHub Actions
+- ✅ Homebrew installation process respects sandboxed environment limitations
 
 ### Evolution of Project Approach
 
@@ -52,6 +53,10 @@ The project went through several iterations to find the most reliable and securi
     - Auto-detection and repair of broken `assert_match` lines
     - Ruby syntax validation before committing changes
     - Fallback mechanisms to revert changes if validation fails
+- **Homebrew Integration**:
+  - Modified installation script to adapt to Homebrew's sandboxed environment
+  - Implemented conditional code paths for Homebrew vs. direct installation
+  - Removed operations that require elevated permissions when running via Homebrew
 
 ## Next Steps
 
