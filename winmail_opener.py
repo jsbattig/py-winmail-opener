@@ -87,9 +87,23 @@ def extract_winmail_dat(winmail_dat_file):
                 print(f"{error_msg}: {str(e)}")
                 return
         
-        # Extract attachments to ~/Downloads
-        output_dir = os.path.expanduser("~/Downloads")
-        logging.debug(f"Using output directory: {output_dir}")
+        # Determine the output directory
+        # When launched via file association, the working directory is often / (root)
+        # In this case, we need to use a more accessible directory due to sandboxing
+        working_dir = os.getcwd()
+        is_sandboxed = working_dir == "/"
+        logging.debug(f"Is running in sandboxed environment: {is_sandboxed}")
+        
+        if is_sandboxed:
+            # When sandboxed, use a temporary directory which is usually accessible
+            import tempfile
+            output_dir = os.path.join(tempfile.gettempdir(), "winmail_attachments")
+            logging.debug(f"Using sandboxed-safe output directory: {output_dir}")
+        else:
+            # Standard case - use Downloads folder
+            output_dir = os.path.expanduser("~/Downloads")
+            logging.debug(f"Using standard output directory: {output_dir}")
+            
         os.makedirs(output_dir, exist_ok=True)
         
         # Track extracted attachments for link generation

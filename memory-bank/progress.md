@@ -10,6 +10,7 @@
 - Homebrew formula for easy installation
 - Auto-update capability via GitHub Actions
 - Uninstallation script
+- Sandboxed environment handling for file associations
 
 ## What's Left
 
@@ -21,6 +22,17 @@
 - Support macOS dark mode in the HTML viewer
 
 ## Current Status
+
+### May 7, 2025: Sandboxed Environment Support Added
+
+Implemented support for detecting and handling sandboxed execution environments when the application is launched via file association (double-click). Previously, files containing attachments would fail when opened via double-click due to macOS permission restrictions.
+
+The fix includes:
+1. Detection of sandboxed environment (working directory is root)
+2. Alternative attachment storage location for sandboxed mode
+3. Improved error handling for permission-related issues
+
+This ensures all winmail.dat files open properly regardless of how they're launched and what content they contain.
 
 ### May 7, 2025: HTML Content Support Added
 
@@ -59,9 +71,11 @@ Improved error handling throughout the application to gracefully handle malforme
 - Decided to use a browser-based HTML viewer rather than a native UI for simplicity and cross-platform compatibility
 - Chose to maintain Python 3.6+ compatibility to ensure broad system support
 - Prioritized extraction of body content in all available formats to maximize compatibility
+- Implemented environment detection to handle different macOS security contexts
 
 ## Changes to Initial Plan
 
 - Added Homebrew formula support for easier distribution
 - Implemented multiple file association fixes instead of a single approach
 - Added HTML content support to handle a wider range of winmail.dat files
+- Added sandboxed environment handling for better compatibility with macOS security
