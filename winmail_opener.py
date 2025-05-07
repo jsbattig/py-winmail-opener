@@ -255,8 +255,12 @@ def create_html_view(tnef, attachments):
     # Email body content
     html += '<div class="body-container">'
     
-    # Try to get RTF body first, then plain text if not available
-    if hasattr(tnef, 'rtfbody') and tnef.rtfbody:
+    # Try to get HTML body first, then RTF, then plain text
+    if hasattr(tnef, 'htmlbody') and tnef.htmlbody:
+        # Use the HTML body content
+        html_content = sanitize_html_content(tnef.htmlbody)
+        html += f'<div>{html_content}</div>'
+    elif hasattr(tnef, 'rtfbody') and tnef.rtfbody:
         # Convert RTF to HTML
         body_html = convert_rtf_to_html(tnef.rtfbody)
         html += f'<div>{body_html}</div>'
@@ -370,6 +374,38 @@ def get_tnef_value(value):
             return str(value)
     
     return str(value)
+
+
+def sanitize_html_content(html_content):
+    """
+    Clean up and sanitize HTML content from winmail.dat files
+    to make it safe for display and properly formatted.
+    """
+    if isinstance(html_content, bytes):
+        html_content = html_content.decode('utf-8', 'ignore')
+    
+    # Extract just the body content if possible
+    body_start = html_content.find("<body")
+    if body_start >= 0:
+        body_end = html_content.find("</body>", body_start)
+        if body_end >= 0:
+            # Include the body tag itself
+            body_content = html_content[body_start:body_end + 7]
+            
+            # Attempt to preserve styles
+            head_start = html_content.find("<head")
+            head_end = html_content.find("</head>")
+            if head_start >= 0 and head_end >= 0:
+                style_start = html_content.find("<style", head_start)
+                style_end = html_content.find("</style>", style_start)
+                if style_start >= 0 and style_end >= 0:
+                    style_content = html_content[style_start:style_end + 8]
+                    return f"{style_content}{body_content}"
+            
+            return body_content
+    
+    # If we couldn't extract the body, return the full content
+    return html_content
 
 
 def convert_rtf_to_html(rtf_data):

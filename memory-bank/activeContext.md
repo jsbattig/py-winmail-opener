@@ -1,84 +1,58 @@
 # Active Context
 
-**Current Work Focus:**
+## Current Focus
 
-*   Creating a Homebrew package for easier distribution and installation.
-*   Consolidating the installation and file association approaches into a single, security-friendly solution.
-*   Streamlining the README and installation process.
-*   Removing unnecessary files and approaches while maintaining the core functionality.
+We are currently working on ensuring the application correctly handles all email content types from winmail.dat files, specifically:
 
-**Recent Changes:**
+1. HTML content
+2. RTF content
+3. Plain text content
 
-*   Created a Homebrew formula (`py-winmail-opener.rb`) for package distribution.
-*   Added Homebrew installation instructions to the README.
-*   Modified the `install.py` script to work in Homebrew mode with system Python.
-*   Updated version to 1.0.0 for the first stable release.
-*   Added `--version` flag to the CLI for easier version checking and Homebrew testing.
-*   Completely rewrote the `install.py` script to integrate the security-friendly AppleScript approach.
-*   Simplified the README file to focus on the consolidated installation process.
-*   Fixed GitHub Actions workflows for automating releases and Homebrew formula updates:
-    * Fixed auto-release workflow to properly handle version string formats
-    * Enhanced the update-homebrew workflow with multiple trigger events and better error handling
-    * Added direct workflow call to ensure update-homebrew workflow is triggered on every release
-    * Enhanced formula updating with robust syntax validation and more precise pattern matching
-*   Created a clean, consolidated installation process that:
-    * Creates a virtual environment with necessary dependencies
-    * Creates a simple AppleScript application that directly calls a handler script
-    * Sets file associations using duti (if available) or macOS native methods
-    * Avoids triggering security warnings from antivirus software
-*   Experimented with various file association approaches to find the most reliable solution:
-    * **AppleScript approach (chosen solution)** - Creates a lightweight AppleScript application that directly handles file open events and calls our Python script. This approach avoids security warnings while providing reliable file handling.
-    * **Launch Agent approach** - Created a launch agent that ensures our handler is called. Effective but triggered security warnings.
-    * **Duti approach** - Used the duti command-line tool to set system-level file associations.
-    * **Info.plist modifications** - Added specific keys to the application bundle's Info.plist file to better handle Apple Events.
-    * **Shell script improvements** - Enhanced the file path detection in the application's shell script.
+## Recent Changes
 
-**Next Steps:**
+### HTML Content Support (May 7, 2025)
 
-*   Consider adding a proper icon for the application bundle.
-*   Add more comprehensive testing for different types of Winmail.dat files.
-*   Consider automatic update checks or mechanisms.
-*   Monitor GitHub Actions workflow to verify that the enhanced update-homebrew workflow and direct workflow call reliably update the Homebrew formula.
+Added support for displaying HTML content from winmail.dat files. Previously, the application only checked for RTF and plain text content, but some winmail.dat files only contain HTML content in the `htmlbody` attribute.
 
-**Active Decisions and Considerations:**
+Changes included:
+- Modified `winmail_opener.py` to prioritize HTML content over RTF and plain text
+- Added a new `sanitize_html_content()` function to properly extract and clean HTML content
+- Maintained backward compatibility with existing RTF and plain text handling
 
-*   Chose the AppleScript approach as it provides the best balance of reliability and security.
-*   Prioritized avoiding antivirus warnings by not using Launch Agents.
-*   Integrated file association setting directly into the install.py script.
-*   Maintained backward compatibility with direct command-line usage.
-*   Fixed GitHub Actions auto-release workflow to correctly handle version formatting in setup.py and winmail_opener.py.
-*   Improved the update-homebrew workflow with multiple trigger mechanisms:
-    * Added trigger events for different types of release events (published, created, edited)
-    * Added direct workflow call from auto-release workflow to ensure reliable execution
-    * Implemented a "belt and suspenders" approach for maximum reliability
-*   Enhanced Homebrew formula installation to avoid Mach-O binary validation errors:
-    * Moved wrapper script from bin to libexec/bin with proper symlink
-    * Added skip_clean :all directive to completely disable binary validation 
-    * Improved wrapper script path to use Formula references for maximum reliability
-    * Updated both local repository and remote Homebrew tap with the fix
-*   Established Git workflow best practices:
-    * **Always pull changes from git before making changes** - This prevents conflicts and ensures you're working with the latest codebase
-    * Use rebase when appropriate to maintain a clean history (`git pull --rebase`)
-    * Verify changes with local testing before pushing to remote repositories
-*   Created a submodule structure for Homebrew tap management:
-    * Added homebrew-winmail repository as a submodule under the homebrew/ directory
-    * This enables coordinated changes across both the main application and the Homebrew formula
-    * Ensures version synchronization between the application and its formula
+This enhancement ensures:
+- Email content is properly displayed regardless of format (HTML, RTF, or plain text)
+- Rich formatting in HTML emails is preserved
+- The application handles a wider range of winmail.dat files
 
-**Learnings and Project Insights:**
+## Next Steps
 
-*   macOS file associations are complex, especially for Python-based applications.
-*   AppleScript provides a reliable bridge between macOS file events and command-line scripts.
-*   Simple approaches often work better than complex ones for application integration.
-*   Security software often flags Launch Agents as suspicious, even when used legitimately.
-*   Duti is a powerful tool for setting file associations but may not be available on all systems.
-*   The AppleScript approach provides the most natural macOS integration.
-*   GitHub Actions workflows need to match the exact string format used in source files when performing version updates. In our case, the workflow was using single quotes in its search patterns while the actual files used double quotes.
-*   Adding robust error handling and diagnostic output in CI workflows makes troubleshooting much easier.
-*   Workflow trigger events should match the expected context for variables. For the Homebrew update workflow, using a release trigger ensures that tag and version information is available in the expected format.
-*   When updating files with sed in CI/CD pipelines, pattern matches should be as specific as possible to avoid breaking syntax.
-*   Always validate the output of automated file changes, especially when dealing with code in different languages (like Ruby in Homebrew formulas).
-*   When modifying code in different languages (like Ruby formulas), it's critical to understand the complete syntax structure you're modifying. In our case, we needed to understand that `assert_match` in Ruby requires two parameters.
-*   Implementing fallback strategies for automated processes provides resilience. Our final update-homebrew workflow can detect and repair broken assert_match lines or add them if missing.
-*   Homebrew installations have restricted permissions and operate in a sandboxed environment, requiring different approaches than normal installations. In particular, file operations that work in normal mode (like creating files on the Desktop) may fail under Homebrew's permissions model.
-*   GitHub event systems can sometimes be unreliable, and having multiple trigger mechanisms (both event-based and direct workflow calls) provides the most robust solution for critical CI/CD pipelines.
+1. Add more thorough testing with various winmail.dat file formats
+2. Consider improving RTF-to-HTML conversion for better fidelity
+3. Add support for file attachments with international characters
+4. Update documentation to reflect the new content handling capabilities
+
+## Active Decisions and Considerations
+
+- Maintaining code structure that prioritizes different content types in descending order: HTML → RTF → plain text
+- Preserving style information from the original HTML when possible
+- Ensuring sanitization of HTML content for security
+- Keeping the interface clean and consistent across different content types
+
+## Important Patterns and Preferences
+
+1. Content type prioritization:
+   - HTML content (if available)
+   - RTF content (if available and no HTML)
+   - Plain text (if no HTML or RTF is available)
+
+2. File processing workflow:
+   - Parse the TNEF file
+   - Extract metadata
+   - Extract and display the appropriate body content
+   - Extract and provide links to attachments
+
+## Learnings and Project Insights
+
+1. TNEF files can contain content in multiple formats simultaneously or in only one format
+2. The HTML content in TNEF files is often structured as complete HTML documents with metadata and styling information
+3. Different email clients may generate winmail.dat files with different content formats
