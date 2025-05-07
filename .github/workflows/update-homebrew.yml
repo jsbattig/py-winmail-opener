@@ -7,7 +7,10 @@ name: Update Homebrew Tap
 
 on:
   release:
-    types: [published]
+    types: [published, created, edited]
+  push:
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       tag_name:
@@ -32,10 +35,25 @@ jobs:
             echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
             TAG_INPUT="${{ github.event.inputs.tag_name }}"
             echo "VERSION=${TAG_INPUT#v}" >> $GITHUB_ENV
-          else
+          elif [ "${{ github.event_name }}" == "release" ]; then
             echo "TAG_NAME=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
             echo "VERSION=${github.event.release.tag_name#v}" >> $GITHUB_ENV
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            # Extract tag name from ref
+            TAG_NAME="${GITHUB_REF#refs/tags/}"
+            echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+            echo "VERSION=${TAG_NAME#v}" >> $GITHUB_ENV
+          else
+            # Fallback - try to get the latest tag
+            TAG_NAME=$(git describe --tags --abbrev=0)
+            echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+            echo "VERSION=${TAG_NAME#v}" >> $GITHUB_ENV
           fi
+          
+          # Print debug information
+          echo "Event name: ${{ github.event_name }}"
+          echo "Tag name: ${{ env.TAG_NAME }}"
+          echo "Version: ${{ env.VERSION }}"
       
       - name: Download release tarball and calculate checksum
         run: |
@@ -57,6 +75,10 @@ jobs:
           # Get the current assertion line to see its full structure
           ASSERT_LINE=$(grep -n "assert_match.*winmail_opener" py-winmail-opener.rb || echo "Line not found")
           echo "Current assert_match line: ${ASSERT_LINE}"
+          
+          # Debug what files were modified
+          echo "Files in the repository:"
+          ls -la
           
           # Fix for Ruby syntax - ensure complete assert_match line structure
           # Looking at our template, the proper structure should be:
@@ -95,5 +117,30 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add py-winmail-opener.rb
-          git commit -m "Update formula for py-winmail-opener ${{ env.TAG_NAME }}"
-          git push
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit - formula is already up to date"
+          else
+            git commit -m "Update formula for py-winmail-opener ${{ env.TAG_NAME }}"
+            
+            # Try to push with error handling
+            git push || {
+              echo "Push failed. Fetching latest changes and trying again..."
+              git fetch
+              git rebase origin/master
+              git push
+            }
+          fi
+          
+      - name: Verify Formula Update
+        run: |
+          cd homebrew-winmail
+          # Check if the formula has the correct version
+          if grep -q "assert_match \"winmail_opener ${{ env.VERSION }}\"" py-winmail-opener.rb; then
+            echo "Formula successfully updated to version ${{ env.VERSION }}"
+          else
+            echo "Warning: Formula version may not have been updated correctly"
+            echo "Current formula content:"
+            cat py-winmail-opener.rb
+          fi

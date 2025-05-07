@@ -172,5 +172,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
-  # This job isn't needed as the existing update-homebrew workflow is triggered by release publish
-  # The update-homebrew workflow will automatically handle updating the Homebrew formula
+  # Directly trigger the update-homebrew workflow to ensure it runs
+  trigger-homebrew-update:
+    needs: bump-version-and-release
+    if: needs.bump-version-and-release.outputs.new_version != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger update-homebrew workflow
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          NEW_VERSION: ${{ needs.bump-version-and-release.outputs.new_version }}
+        run: |
+          echo "Triggering update-homebrew workflow with version v$NEW_VERSION"
+          
+          # Use the GitHub API to trigger the workflow_dispatch event
+          curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: token $GH_TOKEN" \
+            https://api.github.com/repos/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml/dispatches \
+            -d "{\"ref\":\"master\",\"inputs\":{\"tag_name\":\"v$NEW_VERSION\"}}"
+          
+          # Add a delay to allow GitHub to process the request
+          echo "Waiting for workflow to start..."
+          sleep 5
+          
+          # Check if the workflow was triggered successfully
+          echo "Workflow triggered. You can check the status in the Actions tab."
+          echo "Note: If the workflow doesn't appear, check if the HOMEBREW_TAP_TOKEN has 'workflow' permissions."

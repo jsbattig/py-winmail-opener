@@ -18,12 +18,9 @@
 *   Simplified the README file to focus on the consolidated installation process.
 *   Fixed GitHub Actions workflows for automating releases and Homebrew formula updates:
     * Fixed auto-release workflow to properly handle version string formats
-    * Fixed update-homebrew workflow to trigger on release publication
+    * Enhanced the update-homebrew workflow with multiple trigger events and better error handling
+    * Added direct workflow call to ensure update-homebrew workflow is triggered on every release
     * Enhanced formula updating with robust syntax validation and more precise pattern matching
-*   Fixed Homebrew post-install script to skip test file creation:
-    * Removed attempt to create test file on Desktop when running in Homebrew mode
-    * Added better error handling for file operations
-    * Improved compatibility with Homebrew's sandboxed environment
 *   Created a clean, consolidated installation process that:
     * Creates a virtual environment with necessary dependencies
     * Creates a simple AppleScript application that directly calls a handler script
@@ -41,7 +38,7 @@
 *   Consider adding a proper icon for the application bundle.
 *   Add more comprehensive testing for different types of Winmail.dat files.
 *   Consider automatic update checks or mechanisms.
-*   Monitor GitHub Actions workflow to ensure the fixed auto-release process works correctly.
+*   Monitor GitHub Actions workflow to verify that the enhanced update-homebrew workflow and direct workflow call reliably update the Homebrew formula.
 
 **Active Decisions and Considerations:**
 
@@ -50,7 +47,10 @@
 *   Integrated file association setting directly into the install.py script.
 *   Maintained backward compatibility with direct command-line usage.
 *   Fixed GitHub Actions auto-release workflow to correctly handle version formatting in setup.py and winmail_opener.py.
-*   Improved the update-homebrew workflow to trigger on release publication rather than on push to master, creating a proper CI/CD pipeline where releases automatically update the Homebrew formula.
+*   Improved the update-homebrew workflow with multiple trigger mechanisms:
+    * Added trigger events for different types of release events (published, created, edited)
+    * Added direct workflow call from auto-release workflow to ensure reliable execution
+    * Implemented a "belt and suspenders" approach for maximum reliability
 
 **Learnings and Project Insights:**
 
@@ -68,3 +68,4 @@
 *   When modifying code in different languages (like Ruby formulas), it's critical to understand the complete syntax structure you're modifying. In our case, we needed to understand that `assert_match` in Ruby requires two parameters.
 *   Implementing fallback strategies for automated processes provides resilience. Our final update-homebrew workflow can detect and repair broken assert_match lines or add them if missing.
 *   Homebrew installations have restricted permissions and operate in a sandboxed environment, requiring different approaches than normal installations. In particular, file operations that work in normal mode (like creating files on the Desktop) may fail under Homebrew's permissions model.
+*   GitHub event systems can sometimes be unreliable, and having multiple trigger mechanisms (both event-based and direct workflow calls) provides the most robust solution for critical CI/CD pipelines.

@@ -14,7 +14,10 @@ The project is now in a stable, consolidated state with a single installation ap
 - ✅ The application works without triggering security warnings
 - ✅ Homebrew formula enables one-command installation (`brew install py-winmail-opener`)
 - ✅ GitHub Actions workflow for automated versioning and release creation
-- ✅ Automatic Homebrew formula updates on new releases via GitHub Actions
+- ✅ Enhanced GitHub Actions workflows for reliable Homebrew formula updates:
+  - Multiple trigger events for the update-homebrew workflow
+  - Direct workflow call from auto-release to update-homebrew
+  - Improved error handling and verification steps
 - ✅ Homebrew installation process respects sandboxed environment limitations
 
 ### Evolution of Project Approach
@@ -48,6 +51,7 @@ The project went through several iterations to find the most reliable and securi
 - **CI/CD Infrastructure**: 
   - Fixed GitHub Actions workflow to handle version updates correctly by matching the exact string format used in source files
   - Created a complete CI/CD pipeline where code changes trigger version bumps and releases, which in turn trigger Homebrew formula updates
+  - Added direct workflow call mechanism to ensure the update-homebrew workflow is triggered reliably
   - Enhanced formula updating with robust syntax validation and intelligent formula repair capabilities:
     - Precise pattern matching to avoid breaking the Ruby syntax
     - Auto-detection and repair of broken `assert_match` lines
@@ -64,6 +68,6 @@ The project went through several iterations to find the most reliable and securi
 - [ ] Consider creating a package installer (.pkg) for easier distribution
 - [ ] Add support for more attachment types
 - [ ] Improve error handling for malformed winmail.dat files
-- [ ] Monitor GitHub Actions workflows to ensure they work correctly for future releases
+- [ ] Monitor GitHub Actions workflows to verify that the direct workflow call reliably triggers Homebrew formula updates
 - [ ] Continue refining CI/CD processes with additional self-healing capabilities
 - [ ] Document the Homebrew update process and formula structure for future maintenance
