@@ -1,5 +1,6 @@
 import setuptools
 
+# Trigger GitHub Actions workflow with a dummy change
 setuptools.setup(
     name="winmail_opener",
     version="1.0.1",
