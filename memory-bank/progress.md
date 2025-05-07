@@ -2,7 +2,7 @@
 
 ## Current Status
 
-The project is now in a stable, consolidated state with a single installation approach, and a Homebrew formula has been created for easier distribution.
+The project is now in a stable, consolidated state with a single installation approach, and a Homebrew formula has been created for easier distribution. GitHub Actions workflows have been fixed to automate version bumping and releases.
 
 ### What Works
 
@@ -13,6 +13,7 @@ The project is now in a stable, consolidated state with a single installation ap
 - ✅ File associations are set up automatically (if duti is available) or can be set manually
 - ✅ The application works without triggering security warnings
 - ✅ Homebrew formula enables one-command installation (`brew install py-winmail-opener`)
+- ✅ GitHub Actions workflow for automated versioning and release creation
 
 ### Evolution of Project Approach
 
@@ -42,6 +43,7 @@ The project went through several iterations to find the most reliable and securi
 - **Simplicity vs. Robustness**: Opted for a simpler solution that's easier to maintain
 - **Installation Workflow**: Consolidated all installation steps into a single script
 - **File Handling**: Used multiple detection methods to ensure reliable file path handling
+- **CI/CD Infrastructure**: Fixed GitHub Actions workflow to handle version updates correctly by matching the exact string format used in source files
 
 ## Next Steps
 
@@ -49,3 +51,4 @@ The project went through several iterations to find the most reliable and securi
 - [ ] Consider creating a package installer (.pkg) for easier distribution
 - [ ] Add support for more attachment types
 - [ ] Improve error handling for malformed winmail.dat files
+- [ ] Monitor GitHub Actions workflows to ensure they work correctly for future releases

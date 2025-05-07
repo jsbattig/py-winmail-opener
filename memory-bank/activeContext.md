@@ -33,6 +33,7 @@
 *   Consider adding a proper icon for the application bundle.
 *   Add more comprehensive testing for different types of Winmail.dat files.
 *   Consider automatic update checks or mechanisms.
+*   Monitor GitHub Actions workflow to ensure the fixed auto-release process works correctly.
 
 **Active Decisions and Considerations:**
 
@@ -40,6 +41,7 @@
 *   Prioritized avoiding antivirus warnings by not using Launch Agents.
 *   Integrated file association setting directly into the install.py script.
 *   Maintained backward compatibility with direct command-line usage.
+*   Fixed GitHub Actions auto-release workflow to correctly handle version formatting in setup.py and winmail_opener.py.
 
 **Learnings and Project Insights:**
 
@@ -49,3 +51,5 @@
 *   Security software often flags Launch Agents as suspicious, even when used legitimately.
 *   Duti is a powerful tool for setting file associations but may not be available on all systems.
 *   The AppleScript approach provides the most natural macOS integration.
+*   GitHub Actions workflows need to match the exact string format used in source files when performing version updates. In our case, the workflow was using single quotes in its search patterns while the actual files used double quotes.
+*   Adding robust error handling and diagnostic output in CI workflows makes troubleshooting much easier.

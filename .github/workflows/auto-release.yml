@@ -95,31 +95,52 @@ jobs:
         id: bump_version
         if: steps.check_skip.outputs.skip == 'false'
         run: |
+          set -e  # Exit immediately if any command fails
+          
           # Get current version from setup.py
-          current_version=$(grep -oP "version='\K[^']+" setup.py)
+          current_version=$(grep -oP 'version="\K[^"]+' setup.py) || { echo "Failed to extract current version from setup.py"; exit 1; }
           echo "Current version: $current_version"
+          
+          if [ -z "$current_version" ]; then
+            echo "Error: Could not extract version from setup.py"
+            echo "Printing first 10 lines of setup.py for debugging:"
+            head -10 setup.py
+            exit 1
+          fi
           
           # Calculate new version using semver
           case "$BUMP_TYPE" in
             major)
-              new_version=$(python -c "import semver; print(semver.bump_major('$current_version'))")
+              new_version=$(python -c "import semver; print(semver.bump_major('$current_version'))") || { echo "Failed to bump major version"; exit 1; }
               ;;
             minor)
-              new_version=$(python -c "import semver; print(semver.bump_minor('$current_version'))")
+              new_version=$(python -c "import semver; print(semver.bump_minor('$current_version'))") || { echo "Failed to bump minor version"; exit 1; }
               ;;
             *)
-              new_version=$(python -c "import semver; print(semver.bump_patch('$current_version'))")
+              new_version=$(python -c "import semver; print(semver.bump_patch('$current_version'))") || { echo "Failed to bump patch version"; exit 1; }
               ;;
           esac
           
           echo "New version: $new_version"
           echo "new_version=$new_version" >> $GITHUB_OUTPUT
           
+          # Show file content before update for debugging
+          echo "setup.py before update:"
+          grep "version=" setup.py
+          echo "winmail_opener.py before update:"
+          grep "__version__" winmail_opener.py
+          
           # Update version in setup.py
-          sed -i "s/version='$current_version'/version='$new_version'/g" setup.py
+          sed -i "s/version=\"$current_version\"/version=\"$new_version\"/g" setup.py || { echo "Failed to update version in setup.py"; exit 1; }
           
           # Update version in winmail_opener.py
-          sed -i "s/__version__ = '$current_version'/__version__ = '$new_version'/g" winmail_opener.py
+          sed -i "s/__version__ = \"$current_version\"/__version__ = \"$new_version\"/g" winmail_opener.py || { echo "Failed to update version in winmail_opener.py"; exit 1; }
+          
+          # Verify updates
+          echo "setup.py after update:"
+          grep "version=" setup.py
+          echo "winmail_opener.py after update:"
+          grep "__version__" winmail_opener.py
           
           # Configure git
           git config user.name "GitHub Actions Bot"
