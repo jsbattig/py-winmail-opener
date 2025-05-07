@@ -53,9 +53,17 @@
     * Implemented a "belt and suspenders" approach for maximum reliability
 *   Enhanced Homebrew formula installation to avoid Mach-O binary validation errors:
     * Moved wrapper script from bin to libexec/bin with proper symlink
-    * Added skip_clean :all directive to prevent all binary validation 
+    * Added skip_clean :all directive to completely disable binary validation 
     * Improved wrapper script path to use Formula references for maximum reliability
     * Updated both local repository and remote Homebrew tap with the fix
+*   Established Git workflow best practices:
+    * **Always pull changes from git before making changes** - This prevents conflicts and ensures you're working with the latest codebase
+    * Use rebase when appropriate to maintain a clean history (`git pull --rebase`)
+    * Verify changes with local testing before pushing to remote repositories
+*   Created a submodule structure for Homebrew tap management:
+    * Added homebrew-winmail repository as a submodule under the homebrew/ directory
+    * This enables coordinated changes across both the main application and the Homebrew formula
+    * Ensures version synchronization between the application and its formula
 
 **Learnings and Project Insights:**
 

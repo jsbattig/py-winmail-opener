@@ -1,0 +1,3 @@
+[submodule "homebrew"]
+	path = homebrew
+	url = https://github.com/jsbattig/homebrew-winmail.git

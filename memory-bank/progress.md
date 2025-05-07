@@ -24,6 +24,10 @@ The project is now in a stable, consolidated state with a single installation ap
   - Added skip_clean :all directive to completely disable binary validation
   - Created proper symlinks from bin to libexec/bin
   - Updated both the local Homebrew tap and remote repository
+- ✅ Improved repository structure with Git submodules:
+  - Added homebrew-winmail repository as a submodule
+  - Enables synchronized changes between application and formula
+  - Simplifies development workflow for formula changes
 
 ### Evolution of Project Approach
 
@@ -67,6 +71,53 @@ The project went through several iterations to find the most reliable and securi
   - Implemented conditional code paths for Homebrew vs. direct installation
   - Removed operations that require elevated permissions when running via Homebrew
 
+## Git Submodule Workflow
+
+The project now uses a Git submodule to manage the Homebrew formula repository. This approach provides several advantages for development and maintenance:
+
+### Submodule Setup
+
+- The Homebrew formula repository is included as a submodule at `homebrew/`
+- Initial clone with submodules: `git clone --recurse-submodules https://github.com/jsbattig/py-winmail-opener.git`
+- Update submodules after regular clone: `git submodule update --init --recursive`
+
+### Working with Submodules
+
+1. **Always pull changes first**:
+   ```bash
+   # Update main repository
+   git pull
+   
+   # Update submodule to latest
+   git submodule update --remote homebrew
+   ```
+
+2. **Making coordinated changes**:
+   ```bash
+   # 1. Navigate to submodule directory
+   cd homebrew
+   
+   # 2. Make changes to formula
+   # (edit py-winmail-opener.rb)
+   
+   # 3. Commit changes in submodule
+   git add py-winmail-opener.rb
+   git commit -m "Update formula for version X.Y.Z"
+   git push
+   
+   # 4. Return to main repository and commit submodule update
+   cd ..
+   git add homebrew
+   git commit -m "Update Homebrew formula submodule reference"
+   git push
+   ```
+
+3. **Recommended workflow for releases**:
+   - Update application code and version
+   - Update formula in submodule to reflect new version
+   - Commit and push both repositories
+   - Tag the main repository for release
+
 ## Next Steps
 
 - [ ] Add proper application icon to improve user experience
@@ -75,4 +126,4 @@ The project went through several iterations to find the most reliable and securi
 - [ ] Improve error handling for malformed winmail.dat files
 - [ ] Monitor GitHub Actions workflows to verify that the direct workflow call reliably triggers Homebrew formula updates
 - [ ] Continue refining CI/CD processes with additional self-healing capabilities
-- [ ] Document the Homebrew update process and formula structure for future maintenance
+- [ ] Update GitHub Actions workflows to handle the submodule structure
