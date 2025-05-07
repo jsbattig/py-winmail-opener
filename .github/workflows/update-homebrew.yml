@@ -50,14 +50,42 @@ jobs:
           sed -i "s|url \".*\"|url \"https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/${{ env.TAG_NAME }}.tar.gz\"|" py-winmail-opener.rb
           sed -i "s|sha256 \".*\"|sha256 \"${{ env.SHA256 }}\"|" py-winmail-opener.rb
           
-          # More carefully update the version in the assert_match line
-          # This preserves the rest of the line structure
-          sed -i "s|assert_match \"winmail_opener [0-9.]*\"|assert_match \"winmail_opener ${{ env.VERSION }}\"|" py-winmail-opener.rb
+          # First examine the formula to understand its structure
+          echo "Current formula structure:"
+          cat py-winmail-opener.rb
+          
+          # Get the current assertion line to see its full structure
+          ASSERT_LINE=$(grep -n "assert_match.*winmail_opener" py-winmail-opener.rb || echo "Line not found")
+          echo "Current assert_match line: ${ASSERT_LINE}"
+          
+          # Fix for Ruby syntax - ensure complete assert_match line structure
+          # Looking at our template, the proper structure should be:
+          # assert_match "winmail_opener VERSION", shell_output("#{bin}/winmail-opener --version")
+          
+          # Try to find the assert_match line first
+          if grep -q "assert_match.*winmail_opener" py-winmail-opener.rb; then
+            # Replace only the version number while keeping the full line structure intact
+            sed -i "s|winmail_opener [0-9][0-9.]*|winmail_opener ${{ env.VERSION }}|" py-winmail-opener.rb
+          else
+            echo "WARNING: assert_match line not found. Adding proper assert_match line."
+            # Add a proper assert_match line at the end of the test block if it doesn't exist
+            sed -i "/test do/a\\    assert_match \"winmail_opener ${{ env.VERSION }}\", shell_output(\"\#{bin}/winmail-opener --version\")" py-winmail-opener.rb
+          fi
+          
+          # If the assert_match line doesn't have shell_output, fix it
+          if grep -q "assert_match \"winmail_opener.*\")" py-winmail-opener.rb; then
+            echo "Fixing incomplete assert_match line"
+            sed -i "s|assert_match \"winmail_opener.*\")|assert_match \"winmail_opener ${{ env.VERSION }}\", shell_output(\"\#{bin}/winmail-opener --version\")|" py-winmail-opener.rb
+          fi
+          
+          echo "Updated formula:"
+          cat py-winmail-opener.rb
           
           # Check if the formula is valid Ruby
           ruby -c py-winmail-opener.rb || {
             echo "Error: Formula has syntax errors after update"
-            cat py-winmail-opener.rb
+            echo "Reverting changes to prevent breaking the formula"
+            git checkout -- py-winmail-opener.rb
             exit 1
           }
       

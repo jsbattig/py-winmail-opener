@@ -61,3 +61,5 @@
 *   Workflow trigger events should match the expected context for variables. For the Homebrew update workflow, using a release trigger ensures that tag and version information is available in the expected format.
 *   When updating files with sed in CI/CD pipelines, pattern matches should be as specific as possible to avoid breaking syntax.
 *   Always validate the output of automated file changes, especially when dealing with code in different languages (like Ruby in Homebrew formulas).
+*   When modifying code in different languages (like Ruby formulas), it's critical to understand the complete syntax structure you're modifying. In our case, we needed to understand that `assert_match` in Ruby requires two parameters.
+*   Implementing fallback strategies for automated processes provides resilience. Our final update-homebrew workflow can detect and repair broken assert_match lines or add them if missing.
