@@ -5,7 +5,7 @@ import subprocess  # Used for opening the email body with the default text edito
 import logging  # Used for logging debug information
 
 # Version information - keep in sync with setup.py
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 # Configure logging first before any imports that might use it
 logging.basicConfig(
