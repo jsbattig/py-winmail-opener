@@ -1,0 +1,155 @@
+name: Automatic Release
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**.md'
+      - '.github/workflows/update-homebrew.yml'
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type (patch/minor/major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      skip_release:
+        description: 'Skip release creation (use for testing)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  bump-version-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      new_version: ${{ steps.bump_version.outputs.new_version }}
+      release_created: ${{ steps.create_release.outputs.release_created }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install semver
+      
+      - name: Determine version bump type
+        id: determine_bump_type
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Use manually specified bump type for workflow_dispatch
+            echo "BUMP_TYPE=${{ github.event.inputs.bump_type }}" >> $GITHUB_ENV
+            echo "SKIP_RELEASE=${{ github.event.inputs.skip_release }}" >> $GITHUB_ENV
+          else
+            # For automatic triggers, determine bump type from commit message
+            commit_message=$(git log -1 --pretty=%B)
+            echo "Commit message: $commit_message"
+            
+            if [[ "$commit_message" == *"[skip-release]"* ]]; then
+              echo "SKIP_RELEASE=true" >> $GITHUB_ENV
+              echo "Skipping release as requested in commit message"
+            else
+              echo "SKIP_RELEASE=false" >> $GITHUB_ENV
+              
+              if [[ "$commit_message" == *"[major]"* ]]; then
+                echo "BUMP_TYPE=major" >> $GITHUB_ENV
+                echo "Detected [major] in commit message"
+              elif [[ "$commit_message" == *"[minor]"* ]]; then
+                echo "BUMP_TYPE=minor" >> $GITHUB_ENV
+                echo "Detected [minor] in commit message"
+              else
+                echo "BUMP_TYPE=patch" >> $GITHUB_ENV
+                echo "Using default patch version bump"
+              fi
+            fi
+          fi
+      
+      - name: Check if release should be skipped
+        id: check_skip
+        run: |
+          if [ "$SKIP_RELEASE" == "true" ]; then
+            echo "Skipping release creation as requested"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Bump version
+        id: bump_version
+        if: steps.check_skip.outputs.skip == 'false'
+        run: |
+          # Get current version from setup.py
+          current_version=$(grep -oP "version='\K[^']+" setup.py)
+          echo "Current version: $current_version"
+          
+          # Calculate new version using semver
+          case "$BUMP_TYPE" in
+            major)
+              new_version=$(python -c "import semver; print(semver.bump_major('$current_version'))")
+              ;;
+            minor)
+              new_version=$(python -c "import semver; print(semver.bump_minor('$current_version'))")
+              ;;
+            *)
+              new_version=$(python -c "import semver; print(semver.bump_patch('$current_version'))")
+              ;;
+          esac
+          
+          echo "New version: $new_version"
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          
+          # Update version in setup.py
+          sed -i "s/version='$current_version'/version='$new_version'/g" setup.py
+          
+          # Update version in winmail_opener.py
+          sed -i "s/__version__ = '$current_version'/__version__ = '$new_version'/g" winmail_opener.py
+          
+          # Configure git
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          # Commit version bump
+          git add setup.py winmail_opener.py
+          git commit -m "[Automated] Bump version to $new_version"
+          git push
+      
+      - name: Create Tag
+        if: steps.check_skip.outputs.skip == 'false'
+        run: |
+          new_version="${{ steps.bump_version.outputs.new_version }}"
+          git tag -a "v$new_version" -m "Release v$new_version"
+          git push origin "v$new_version"
+      
+      - name: Create GitHub Release
+        id: create_release
+        if: steps.check_skip.outputs.skip == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.bump_version.outputs.new_version }}
+          name: Release v${{ steps.bump_version.outputs.new_version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  # This job isn't needed as the existing update-homebrew workflow is triggered by release publish
+  # The update-homebrew workflow will automatically handle updating the Homebrew formula

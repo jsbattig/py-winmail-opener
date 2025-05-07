@@ -147,27 +147,73 @@ python py-winmail-opener/test_winmail_opener.py
 
 ## For Developers
 
-### GitHub Actions Automation
+### Automated Release Process
 
-This project includes a GitHub Actions workflow that automatically updates the Homebrew formula when you create a new release. The workflow:
+This project features a fully automated release system that creates new releases and updates the Homebrew formula automatically when changes are pushed to the master branch.
 
-1. Triggers when a new release is published on GitHub
-2. Downloads the release tarball
-3. Calculates the SHA256 checksum
-4. Updates the formula in the homebrew-winmail repository
-5. Commits and pushes the changes
+#### How It Works
 
-To set this up:
+1. When you push commits to the master branch, a GitHub Actions workflow is triggered
+2. The workflow analyzes the commit message to determine the version bump type
+3. Version numbers are automatically updated in all relevant files
+4. A new Git tag is created with the new version number
+5. A GitHub release is published with automatically generated release notes
+6. The Homebrew formula is updated with the new version and SHA256 hash
+
+#### Controlling Version Bumps with Commit Messages
+
+You can control how the version number is incremented by including special prefixes in your commit messages:
+
+| Prefix | Description | Example | Result |
+|--------|-------------|---------|--------|
+| `[patch]` or no prefix | Bump patch version | `Fix bug in extraction [patch]` or `Fix bug in extraction` | 1.0.0 → 1.0.1 |
+| `[minor]` | Bump minor version | `Add new feature [minor]` | 1.0.0 → 1.1.0 |
+| `[major]` | Bump major version | `Breaking API change [major]` | 1.0.0 → 2.0.0 |
+| `[skip-release]` | Don't create a release | `Update documentation [skip-release]` | No version change |
+
+#### Examples
+
+```bash
+# This will create a patch release (e.g., 1.0.0 -> 1.0.1)
+git commit -m "Fix extraction bug for large attachments"
+
+# This will create a minor release (e.g., 1.0.0 -> 1.1.0)
+git commit -m "Add support for new attachment types [minor]"
+
+# This will create a major release (e.g., 1.0.0 -> 2.0.0)
+git commit -m "Restructure API for better performance [major]"
+
+# This will not create a release
+git commit -m "Update README documentation [skip-release]"
+```
+
+#### Manual Release Triggering
+
+You can also manually trigger a release by:
+
+1. Going to the "Actions" tab in GitHub
+2. Selecting the "Automatic Release" workflow
+3. Clicking "Run workflow"
+4. Selecting the desired version bump type and other options
+
+#### GitHub Actions Setup
+
+This project includes two GitHub Actions workflows:
+
+1. **auto-release.yml**: Creates new releases based on commit messages
+2. **update-homebrew.yml**: Updates the Homebrew formula when releases are published
+
+To set up these workflows:
 
 1. Create a Personal Access Token with `repo` scope
 2. Add it as a repository secret named `HOMEBREW_TAP_TOKEN` in your GitHub repository settings
 3. Ensure the token has write access to the homebrew-winmail repository
 
-Once configured, the Homebrew formula will be automatically updated whenever you create a new release.
+Once configured, the entire release process will be automated.
 
-### Creating a Release
+### Creating a Manual Release
 
-To create a new release for use with Homebrew:
+While the automated system handles most release scenarios, you can still create a release manually if needed:
 
 1. Update the version in `setup.py` and `winmail_opener.py`
 2. Create a tagged release on GitHub:
@@ -176,12 +222,6 @@ To create a new release for use with Homebrew:
    git push origin v1.0.0
    ```
 3. Create a release on GitHub through the web interface
-4. Download the release tarball and calculate the SHA256 checksum:
-   ```bash
-   curl -L https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/v1.0.0.tar.gz -o v1.0.0.tar.gz
-   shasum -a 256 v1.0.0.tar.gz
-   ```
-5. Update the SHA256 in the Homebrew formula with the new checksum
 
 ### Updating the Homebrew Formula
 
