@@ -6,8 +6,9 @@ name: Update Homebrew Tap
 # The token needs write access to the homebrew-winmail repository
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       tag_name:
