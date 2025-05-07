@@ -14,6 +14,7 @@ The project is now in a stable, consolidated state with a single installation ap
 - ✅ The application works without triggering security warnings
 - ✅ Homebrew formula enables one-command installation (`brew install py-winmail-opener`)
 - ✅ GitHub Actions workflow for automated versioning and release creation
+- ✅ Automatic Homebrew formula updates on new releases via GitHub Actions
 
 ### Evolution of Project Approach
 
@@ -43,7 +44,9 @@ The project went through several iterations to find the most reliable and securi
 - **Simplicity vs. Robustness**: Opted for a simpler solution that's easier to maintain
 - **Installation Workflow**: Consolidated all installation steps into a single script
 - **File Handling**: Used multiple detection methods to ensure reliable file path handling
-- **CI/CD Infrastructure**: Fixed GitHub Actions workflow to handle version updates correctly by matching the exact string format used in source files
+- **CI/CD Infrastructure**: 
+  - Fixed GitHub Actions workflow to handle version updates correctly by matching the exact string format used in source files
+  - Created a complete CI/CD pipeline where code changes trigger version bumps and releases, which in turn trigger Homebrew formula updates
 
 ## Next Steps
 

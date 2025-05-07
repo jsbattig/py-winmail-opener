@@ -42,6 +42,7 @@
 *   Integrated file association setting directly into the install.py script.
 *   Maintained backward compatibility with direct command-line usage.
 *   Fixed GitHub Actions auto-release workflow to correctly handle version formatting in setup.py and winmail_opener.py.
+*   Improved the update-homebrew workflow to trigger on release publication rather than on push to master, creating a proper CI/CD pipeline where releases automatically update the Homebrew formula.
 
 **Learnings and Project Insights:**
 
@@ -53,3 +54,4 @@
 *   The AppleScript approach provides the most natural macOS integration.
 *   GitHub Actions workflows need to match the exact string format used in source files when performing version updates. In our case, the workflow was using single quotes in its search patterns while the actual files used double quotes.
 *   Adding robust error handling and diagnostic output in CI workflows makes troubleshooting much easier.
+*   Workflow trigger events should match the expected context for variables. For the Homebrew update workflow, using a release trigger ensures that tag and version information is available in the expected format.
