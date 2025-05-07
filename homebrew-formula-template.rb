@@ -4,6 +4,12 @@ class PyWinmailOpener < Formula
   url "https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/v1.0.0.tar.gz"
   sha256 "sha256-value-here"
   license "MIT"
+  
+  # Skip binary validation for all our files
+  skip_clean :all
+  
+  # Disable bottle creation - we're a simple script package
+  bottle :unneeded
 
   depends_on "python@3.10"
   depends_on "duti" => :recommended
@@ -12,25 +18,22 @@ class PyWinmailOpener < Formula
     # Install Python files to libexec to avoid conflicts
     libexec.install Dir["*"]
 
-    # Create libexec/bin directory
-    (libexec/"bin").mkpath
+    # Create bin directory
+    bin.mkpath
 
-    # Create a wrapper script in libexec/bin
-    (libexec/"bin"/"winmail-opener").write <<~EOS
+    # Create a wrapper script directly in bin (avoiding libexec/bin)
+    (bin/"winmail-opener").write <<~EOS
       #!/bin/bash
       "#{Formula["python@3.10"].opt_bin}/python3.10" "#{libexec}/winmail_opener.py" "$@"
     EOS
 
     # Make the wrapper executable
-    chmod 0755, libexec/"bin"/"winmail-opener"
-    
-    # Create symlink from bin to the script in libexec
-    bin.install_symlink libexec/"bin"/"winmail-opener"
+    chmod 0755, bin/"winmail-opener"
   end
   
   def post_install
     # Try to run the installer automatically with homebrew mode
-    system "#{Formula["python@3.10"].opt_bin}/python3.10", "#{libexec}/install.py" 
+    system "#{Formula["python@3.10"].opt_bin}/python3.10", "#{libexec}/install.py", "--homebrew-mode"
     
     if $?.success?
       puts "WinmailOpener.app was successfully created and installed!"
