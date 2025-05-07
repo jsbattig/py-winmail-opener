@@ -47,6 +47,7 @@ The project went through several iterations to find the most reliable and securi
 - **CI/CD Infrastructure**: 
   - Fixed GitHub Actions workflow to handle version updates correctly by matching the exact string format used in source files
   - Created a complete CI/CD pipeline where code changes trigger version bumps and releases, which in turn trigger Homebrew formula updates
+  - Enhanced formula updating with precise pattern matching and syntax validation to prevent breaking the Homebrew formula
 
 ## Next Steps
 
@@ -55,3 +56,4 @@ The project went through several iterations to find the most reliable and securi
 - [ ] Add support for more attachment types
 - [ ] Improve error handling for malformed winmail.dat files
 - [ ] Monitor GitHub Actions workflows to ensure they work correctly for future releases
+- [ ] Consider adding additional safeguards to CI/CD processes to prevent breaking changes

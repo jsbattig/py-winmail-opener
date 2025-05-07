@@ -45,9 +45,21 @@ jobs:
       - name: Update formula
         run: |
           cd homebrew-winmail
+          
+          # Update URL and SHA256 - these are safe replacements
           sed -i "s|url \".*\"|url \"https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/${{ env.TAG_NAME }}.tar.gz\"|" py-winmail-opener.rb
           sed -i "s|sha256 \".*\"|sha256 \"${{ env.SHA256 }}\"|" py-winmail-opener.rb
-          sed -i "s|\"winmail_opener .*\"|\"winmail_opener ${{ env.VERSION }}\"|" py-winmail-opener.rb
+          
+          # More carefully update the version in the assert_match line
+          # This preserves the rest of the line structure
+          sed -i "s|assert_match \"winmail_opener [0-9.]*\"|assert_match \"winmail_opener ${{ env.VERSION }}\"|" py-winmail-opener.rb
+          
+          # Check if the formula is valid Ruby
+          ruby -c py-winmail-opener.rb || {
+            echo "Error: Formula has syntax errors after update"
+            cat py-winmail-opener.rb
+            exit 1
+          }
       
       - name: Commit and push changes
         run: |

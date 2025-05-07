@@ -16,6 +16,10 @@
 *   Added `--version` flag to the CLI for easier version checking and Homebrew testing.
 *   Completely rewrote the `install.py` script to integrate the security-friendly AppleScript approach.
 *   Simplified the README file to focus on the consolidated installation process.
+*   Fixed GitHub Actions workflows for automating releases and Homebrew formula updates:
+    * Fixed auto-release workflow to properly handle version string formats
+    * Fixed update-homebrew workflow to trigger on release publication
+    * Enhanced formula updating with robust syntax validation and more precise pattern matching
 *   Created a clean, consolidated installation process that:
     * Creates a virtual environment with necessary dependencies
     * Creates a simple AppleScript application that directly calls a handler script
@@ -55,3 +59,5 @@
 *   GitHub Actions workflows need to match the exact string format used in source files when performing version updates. In our case, the workflow was using single quotes in its search patterns while the actual files used double quotes.
 *   Adding robust error handling and diagnostic output in CI workflows makes troubleshooting much easier.
 *   Workflow trigger events should match the expected context for variables. For the Homebrew update workflow, using a release trigger ensures that tag and version information is available in the expected format.
+*   When updating files with sed in CI/CD pipelines, pattern matches should be as specific as possible to avoid breaking syntax.
+*   Always validate the output of automated file changes, especially when dealing with code in different languages (like Ruby in Homebrew formulas).
