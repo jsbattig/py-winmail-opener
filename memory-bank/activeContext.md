@@ -51,6 +51,10 @@
     * Added trigger events for different types of release events (published, created, edited)
     * Added direct workflow call from auto-release workflow to ensure reliable execution
     * Implemented a "belt and suspenders" approach for maximum reliability
+*   Enhanced Homebrew formula installation to avoid Mach-O binary validation errors:
+    * Moved wrapper script from bin to libexec/bin with proper symlink
+    * Added skip_clean directive to prevent binary validation for shell scripts
+    * Improved wrapper script path to use Formula references for maximum reliability
 
 **Learnings and Project Insights:**
 

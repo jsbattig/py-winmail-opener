@@ -19,6 +19,10 @@ The project is now in a stable, consolidated state with a single installation ap
   - Direct workflow call from auto-release to update-homebrew
   - Improved error handling and verification steps
 - ✅ Homebrew installation process respects sandboxed environment limitations
+- ✅ Fixed "Failed to read Mach-O binary" errors in Homebrew formula:
+  - Moved wrapper script to libexec/bin directory
+  - Added skip_clean directive to prevent binary validation
+  - Created proper symlinks from bin to libexec/bin
 
 ### Evolution of Project Approach
 
