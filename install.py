@@ -69,10 +69,14 @@ def create_virtual_environment():
         print(f"Error installing dependencies in the virtual environment: {e}")
         return None
 
-def create_applescript_handler(venv_python=None):
+def create_applescript_handler(venv_python=None, homebrew_mode=False):
     """
     Creates a simple AppleScript-based file handler without using Launch Agents.
     This is a security-friendly approach that doesn't trigger antivirus warnings.
+    
+    Args:
+        venv_python: Path to the Python interpreter to use
+        homebrew_mode: Whether running in Homebrew installation mode
     """
     # Get paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -129,7 +133,23 @@ exit 0
     
     # Create the AppleScript app
     print("Creating AppleScript application...")
-    app_path = os.path.expanduser("~/Applications/WinmailOpener.app")
+    if homebrew_mode:
+        # In Homebrew mode, install to a location managed by Homebrew
+        try:
+            # Try to get Homebrew prefix
+            brew_prefix = subprocess.check_output(["brew", "--prefix"], text=True).strip()
+            app_path = os.path.join(brew_prefix, "opt/py-winmail-opener/share/WinmailOpener.app")
+            # Ensure the directory exists
+            os.makedirs(os.path.dirname(app_path), exist_ok=True)
+            print(f"Using Homebrew app location: {app_path}")
+        except (subprocess.CalledProcessError, OSError) as e:
+            print(f"Error determining Homebrew prefix: {e}")
+            # Fallback to a location that should be writable
+            app_path = os.path.join(script_dir, "WinmailOpener.app")
+            print(f"Using fallback app location: {app_path}")
+    else:
+        # Standard installation to user's Applications folder
+        app_path = os.path.expanduser("~/Applications/WinmailOpener.app")
     
     # Create temp AppleScript file
     applescript_path = os.path.join(script_dir, "winmail_opener.applescript")
@@ -319,7 +339,7 @@ def main():
     
     # Create the AppleScript handler application
     print("\nCreating AppleScript handler application...")
-    if create_applescript_handler(venv_python):
+    if create_applescript_handler(venv_python, homebrew_mode):
         print("\nAppleScript handler application created successfully!")
     else:
         print("\nFailed to create AppleScript handler application.")
