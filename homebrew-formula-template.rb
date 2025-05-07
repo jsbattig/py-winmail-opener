@@ -7,9 +7,6 @@ class PyWinmailOpener < Formula
   
   # Skip binary validation for all our files
   skip_clean :all
-  
-  # Disable bottle creation - we're a simple script package
-  bottle :unneeded
 
   depends_on "python@3.10"
   depends_on "duti" => :recommended
