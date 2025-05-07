@@ -21,8 +21,9 @@ The project is now in a stable, consolidated state with a single installation ap
 - ✅ Homebrew installation process respects sandboxed environment limitations
 - ✅ Fixed "Failed to read Mach-O binary" errors in Homebrew formula:
   - Moved wrapper script to libexec/bin directory
-  - Added skip_clean directive to prevent binary validation
+  - Added skip_clean :all directive to completely disable binary validation
   - Created proper symlinks from bin to libexec/bin
+  - Updated both the local Homebrew tap and remote repository
 
 ### Evolution of Project Approach
 

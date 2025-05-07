@@ -53,8 +53,9 @@
     * Implemented a "belt and suspenders" approach for maximum reliability
 *   Enhanced Homebrew formula installation to avoid Mach-O binary validation errors:
     * Moved wrapper script from bin to libexec/bin with proper symlink
-    * Added skip_clean directive to prevent binary validation for shell scripts
+    * Added skip_clean :all directive to prevent all binary validation 
     * Improved wrapper script path to use Formula references for maximum reliability
+    * Updated both local repository and remote Homebrew tap with the fix
 
 **Learnings and Project Insights:**
 
