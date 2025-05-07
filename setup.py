@@ -3,7 +3,7 @@ import setuptools
 # Trigger GitHub Actions workflow with a dummy change
 setuptools.setup(
     name="winmail_opener",
-    version="1.0.12",
+    version="1.0.13",
     author="jsbattig",
     author_email="your.email@example.com",  # Replace with a valid email
     description="A simple command-line tool to extract attachments from Winmail.dat files.",
