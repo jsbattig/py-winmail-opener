@@ -275,7 +275,7 @@ def generate_cask_formula(version, sha256):
   
   app "WinmailOpener-#{version}.app"
   
-  binary "#{appdir}/WinmailOpener-#{version}.app/Contents/MacOS/winmail-opener", target: "winmail-opener"
+  binary "{appdir}/WinmailOpener-#{version}.app/Contents/MacOS/winmail-opener", target: "winmail-opener"
   
   uninstall delete: "/usr/local/bin/winmail-opener"
   
