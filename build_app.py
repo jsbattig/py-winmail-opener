@@ -20,6 +20,7 @@ import tempfile
 import argparse
 import re
 import glob
+import time
 
 def get_version():
     """Extract version from setup.py"""
@@ -30,6 +31,31 @@ def get_version():
     if match:
         return match.group(1)
     return "1.0.0"  # Default version
+
+def compile_applescript(source_path, target_path):
+    """
+    Compile an AppleScript file into a binary executable
+    
+    Args:
+        source_path: Path to the source .applescript file
+        target_path: Path where the compiled script should be saved
+    
+    Returns:
+        True if compilation succeeded, False otherwise
+    """
+    try:
+        print(f"Compiling AppleScript from {source_path} to {target_path}")
+        compile_cmd = [
+            "osacompile",
+            "-o", target_path,
+            source_path
+        ]
+        subprocess.run(compile_cmd, check=True)
+        print(f"AppleScript compilation successful")
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
+        print(f"Error compiling AppleScript: {e}")
+        return False
 
 def build_app_bundle(version, dev_mode=False):
     """
@@ -73,7 +99,7 @@ def build_app_bundle(version, dev_mode=False):
     # Create Info.plist with proper file associations
     info_plist = {
         'CFBundleDisplayName': 'WinmailOpener',
-        'CFBundleExecutable': 'WinmailOpener',
+        'CFBundleExecutable': 'document_handler',  # Use our AppleScript handler as the main executable
         'CFBundleIdentifier': 'com.github.jsbattig.winmailopener',
         'CFBundleName': 'WinmailOpener',
         'CFBundleVersion': version,
@@ -91,7 +117,19 @@ def build_app_bundle(version, dev_mode=False):
                 'CFBundleTypeName': 'Winmail.dat File',
                 'CFBundleTypeRole': 'Editor',
                 'LSHandlerRank': 'Owner',
-                'LSTypeIsPackage': False
+                'LSTypeIsPackage': False,
+                'CFBundleTypeIconFile': 'AppIcon.icns', 
+                'LSItemContentTypes': ['com.microsoft.winmail.dat']
+            }
+        ],
+        'UTExportedTypeDeclarations': [
+            {
+                'UTTypeIdentifier': 'com.microsoft.winmail.dat',
+                'UTTypeDescription': 'Microsoft Outlook Winmail.dat File',
+                'UTTypeConformsTo': ['public.data'],
+                'UTTypeTagSpecification': {
+                    'public.filename-extension': ['dat']
+                }
             }
         ]
     }
@@ -112,7 +150,7 @@ def build_app_bundle(version, dev_mode=False):
         if os.path.exists(os.path.join(src_dir, script)):
             shutil.copy(os.path.join(src_dir, script), os.path.join(resources_dir, script))
     
-    # Create the launcher script
+    # We'll still create the launcher script as a backup
     print("Creating launcher script...")
     with open(os.path.join(macos_dir, 'WinmailOpener'), 'w') as f:
         f.write('''#!/bin/bash
@@ -126,7 +164,7 @@ LOG_FILE=~/WinmailOpener_log.txt
 
 # Log this execution
 echo "========================================" >> "$LOG_FILE"
-echo "WinmailOpener launched at $(date)" >> "$LOG_FILE"
+echo "WinmailOpener launcher script executed at $(date)" >> "$LOG_FILE"
 echo "Arguments received: $@" >> "$LOG_FILE"
 
 # If this script is called with a file path, process it
@@ -144,6 +182,17 @@ fi
     
     # Make launcher executable
     os.chmod(os.path.join(macos_dir, 'WinmailOpener'), 0o755)
+    
+    # Compile and add the AppleScript handler
+    print("Adding AppleScript document handler...")
+    src_dir = os.path.dirname(os.path.abspath(__file__))
+    applescript_source = os.path.join(src_dir, "document_handler.applescript")
+    applescript_target = os.path.join(macos_dir, "document_handler")
+    
+    if not compile_applescript(applescript_source, applescript_target):
+        print("Warning: Could not compile AppleScript. Using fallback method.")
+        # Copy the raw script as a fallback
+        shutil.copy(applescript_source, os.path.join(resources_dir, "document_handler.applescript"))
     
     # Create launcher symlink
     print("Creating command-line symlink...")
