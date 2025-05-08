@@ -97,8 +97,8 @@ jobs:
         run: |
           set -e  # Exit immediately if any command fails
           
-          # Get current version from setup.py
-          current_version=$(grep -oP 'version="\K[^"]+' setup.py) || { echo "Failed to extract current version from setup.py"; exit 1; }
+          # Get current version from setup.py (using grep compatible with macOS)
+          current_version=$(grep 'version=' setup.py | sed 's/.*version="\([^"]*\)".*/\1/') || { echo "Failed to extract current version from setup.py"; exit 1; }
           echo "Current version: $current_version"
           
           if [ -z "$current_version" ]; then
