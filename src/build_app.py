@@ -456,22 +456,6 @@ def main():
             
             if sha256:
                 print(f"SHA256: {sha256}")
-                
-                # Generate cask formula
-                cask_formula = generate_cask_formula(version, sha256)
-                print("\nCask Formula Template:")
-                print("----------------------")
-                print(cask_formula)
-                
-                # Write cask formula to file
-                cask_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "py-winmail-opener-cask.rb")
-                with open(cask_path, "w") as f:
-                    f.write(cask_formula)
-                print(f"\nCask formula written to: {cask_path}")
-                
-                # Instructions for testing locally
-                print("\nTo test locally:")
-                print(f"  brew install --cask {os.path.abspath(dmg_path)}")
 
 if __name__ == "__main__":
     main()

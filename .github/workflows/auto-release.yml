@@ -177,20 +177,6 @@ jobs:
           echo "SHA256=$sha256" >> $GITHUB_ENV
           echo "SHA256 hash: $sha256"
       
-      - name: Prepare Cask Formula
-        if: steps.check_skip.outputs.skip == 'false'
-        run: |
-          # Create Casks directory in homebrew repo
-          NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
-          
-          # Update cask template with version and sha256 (macOS compatible)
-          cat py-winmail-opener-cask.rb | \
-              sed "s/VERSION_PLACEHOLDER/$NEW_VERSION/g" | \
-              sed "s/SHA256_PLACEHOLDER/$SHA256/g" \
-              > py-winmail-opener-updated-cask.rb
-          
-          cat py-winmail-opener-updated-cask.rb
-      
       - name: Create GitHub Release
         id: create_release
         if: steps.check_skip.outputs.skip == 'false'
@@ -203,37 +189,6 @@ jobs:
           generate_release_notes: true
           files: |
             WinmailOpener-${{ steps.bump_version.outputs.new_version }}.dmg
-            py-winmail-opener-updated-cask.rb
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
-  # Directly trigger the update-homebrew-cask workflow to ensure it runs
-  trigger-homebrew-cask-update:
-    needs: bump-version-and-release
-    if: needs.bump-version-and-release.outputs.new_version != ''
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger update-homebrew-cask workflow
-        env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          NEW_VERSION: ${{ needs.bump-version-and-release.outputs.new_version }}
-        run: |
-          echo "Triggering update-homebrew-cask workflow with version v$NEW_VERSION"
-          
-          # Use the GitHub API to trigger the workflow_dispatch event
-          curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: token $GH_TOKEN" \
-            https://api.github.com/repos/jsbattig/py-winmail-opener/actions/workflows/update-homebrew-cask.yml/dispatches \
-            -d "{\"ref\":\"master\",\"inputs\":{\"tag_name\":\"v$NEW_VERSION\"}}"
-          
-          # Add a delay to allow GitHub to process the request
-          echo "Waiting for workflow to start..."
-          sleep 5
-          
-          # Check if the workflow was triggered successfully
-          echo "Workflow triggered. You can check the status in the Actions tab."
-          echo "Note: If the workflow doesn't appear, check if the HOMEBREW_TAP_TOKEN has 'workflow' permissions."
-          
-          # Note: The old update-homebrew.yml workflow is now deprecated in favor of update-homebrew-cask.yml
