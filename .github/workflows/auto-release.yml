@@ -7,6 +7,7 @@ on:
     paths-ignore:
       - '**.md'
       - '.github/workflows/update-homebrew.yml'
+      - 'homebrew/**'
   workflow_dispatch:
     inputs:
       bump_type:
