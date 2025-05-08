@@ -43,6 +43,16 @@ Implemented support for displaying HTML content from winmail.dat files. The appl
 
 Testing confirmed the application now correctly renders HTML content that was previously not being displayed. The HTML content is properly sanitized and styled, preserving the original formatting as much as possible.
 
+### May 8, 2025: Repository Reset to Formula-Based Approach
+
+Reset the repository back to the formula-based Homebrew approach by returning to the "last-formula" tag:
+1. Reverted the master branch to the v1.1.0 commit
+2. Reset the homebrew submodule to its corresponding pre-cask state
+3. Removed cask-related files and directories 
+4. Ensured proper Homebrew formula installation method
+
+This reset was necessary because the cask-based approach was causing installation issues and didn't work as expected. The formula-based approach provides a simpler, more reliable installation method with standard Homebrew commands.
+
 ### April 29, 2025: Fixed Homebrew Formula and Installation
 
 Corrected an issue with the Homebrew formula that was causing installation problems on some systems. Updated the installation documentation to reflect the changes. The app now installs properly via `brew install jsbattig/winmail/py-winmail-opener`.

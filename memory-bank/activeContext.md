@@ -44,6 +44,17 @@ This enhancement ensures:
 3. Add support for file attachments with international characters
 4. Update documentation to reflect the new content handling capabilities
 
+## Repository Reset (May 8, 2025)
+
+Reverted the repository from the cask-based Homebrew approach back to the formula-based approach:
+
+- Reset the master branch to the "last-formula" tag (v1.1.0)
+- Reset the homebrew submodule to the corresponding formula-based version
+- Removed cask-related files and directories
+- Ensured the main py-winmail-opener.rb file is a proper Homebrew Formula
+
+This change was made because the cask-based approach was causing installation issues and didn't work as expected. The formula-based approach provides a more reliable installation method using standard Homebrew commands.
+
 ## Active Decisions and Considerations
 
 - Maintaining code structure that prioritizes different content types in descending order: HTML → RTF → plain text
