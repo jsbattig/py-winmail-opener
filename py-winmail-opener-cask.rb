@@ -1,6 +1,6 @@
 cask "py-winmail-opener" do
-  version "VERSION_PLACEHOLDER"
-  sha256 "SHA256_PLACEHOLDER"
+  version "1.1.3"
+  sha256 "90ec01d010ce3fcc5dab9d52b607d0a91cd37d3bb16b797c7e041afebcaa79f5"
   
   url "https://github.com/jsbattig/py-winmail-opener/releases/download/v#{version}/WinmailOpener-#{version}.dmg"
   name "WinmailOpener"
@@ -9,7 +9,8 @@ cask "py-winmail-opener" do
   
   app "WinmailOpener-#{version}.app"
   
-  binary "#{appdir}/WinmailOpener-#{version}.app/Contents/MacOS/winmail-opener", target: "winmail-opener"
+  # Use explicit path to application directory instead of appdir variable
+  binary "/Applications/WinmailOpener-#{version}.app/Contents/MacOS/winmail-opener", target: "winmail-opener"
   
   uninstall delete: "/usr/local/bin/winmail-opener"
   

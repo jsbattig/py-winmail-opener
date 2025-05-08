@@ -313,19 +313,20 @@ def calculate_sha256(file_path):
 
 def generate_cask_formula(version, sha256):
     """Generate a cask formula template"""
+    # We need to use double braces to escape Ruby template variables in Python f-strings
     cask_formula = f'''cask "py-winmail-opener" do
   version "{version}"
   sha256 "{sha256}"
   
-  url "https://github.com/jsbattig/py-winmail-opener/releases/download/v#{version}/WinmailOpener-#{version}.dmg"
+  url "https://github.com/jsbattig/py-winmail-opener/releases/download/v#{{version}}/WinmailOpener-#{{version}}.dmg"
   name "WinmailOpener"
   desc "Extract attachments and email body from Winmail.dat files"
   homepage "https://github.com/jsbattig/py-winmail-opener"
   
-  app "WinmailOpener-#{version}.app"
+  app "WinmailOpener-#{{version}}.app"
   
   # Use explicit path to application directory instead of appdir variable
-  binary "/Applications/WinmailOpener-#{version}.app/Contents/MacOS/winmail-opener", target: "winmail-opener"
+  binary "/Applications/WinmailOpener-#{{version}}.app/Contents/MacOS/winmail-opener", target: "winmail-opener"
   
   uninstall delete: "/usr/local/bin/winmail-opener"
   
