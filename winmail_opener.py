@@ -7,7 +7,7 @@ import datetime  # Used for formatting dates
 import re  # Used for RTF conversion
 
 # Version information - keep in sync with setup.py
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 
 # Configure logging first before any imports that might use it
 logging.basicConfig(
