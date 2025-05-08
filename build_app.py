@@ -247,7 +247,7 @@ else
             if [ -f "$file" ]; then
                 log_message "Processing recent file: $file"
                 "$PYTHON" "$RESOURCES/winmail_opener.py" "$file" 2>&1 | tee -a "$LOG_FILE"
-                osascript -e 'display notification "Processed '"$file"'" with title "WinmailOpener"'
+                osascript -e "display notification \"Processed $file\" with title \"WinmailOpener\""
                 exit 0
             fi
         done <<< "$recent_files"
