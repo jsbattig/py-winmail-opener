@@ -151,46 +151,119 @@ PYTHON="$RESOURCES/python/bin/python3"
 # Log file for debugging
 LOG_FILE=~/Library/Logs/WinmailOpener_log.txt
 
-# Log this execution
-echo "========================================" >> "$LOG_FILE"
-echo "WinmailOpener launched at $(date)" >> "$LOG_FILE"
-echo "Current directory: $(pwd)" >> "$LOG_FILE"
-echo "Arguments received: $@" >> "$LOG_FILE"
+# Ensure log directory exists
+mkdir -p "$(dirname "$LOG_FILE")"
+
+# Log function for cleaner code
+log_message() {
+    local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "[$timestamp] $1" >> "$LOG_FILE"
+}
+
+# Log script execution
+log_message "========================================"
+log_message "WinmailOpener launched at $(date)"
+log_message "Current directory: $(pwd)"
+log_message "Arguments received: $@"
 
 # Check if we have arguments from command line
 if [ $# -gt 0 ]; then
     # Process files passed directly
-    for file in "$@"; do
-        echo "Processing file from command line: $file" >> "$LOG_FILE"
-        "$PYTHON" "$RESOURCES/winmail_opener.py" "$file" 2>&1 | tee -a "$LOG_FILE"
-    done
-else
-    # Check if we're being opened with a document via Open/Documents Apple event
-    # This approach uses a temp file to handle files dropped on the app icon
-    DROPPED_FILES="$HOME/Library/Logs/WinmailOpener_dropped_files.txt"
-    
-    # Get the most recently modified .dat files in the Downloads folder from the last 30 seconds
-    # This is a heuristic to handle files that were just downloaded or received in email
-    echo "Checking for recently modified .dat files..." >> "$LOG_FILE"
-    FOUND_FILES=$(find ~/Downloads -name "*.dat" -mtime -30s 2>/dev/null)
-    
-    if [ -n "$FOUND_FILES" ]; then
-        echo "Found recently modified .dat files:" >> "$LOG_FILE"
-        echo "$FOUND_FILES" >> "$LOG_FILE"
+    for arg in "$@"; do
+        log_message "Processing argument: $arg"
         
-        # Process each found file
+        # Check if it's a file
+        if [ -f "$arg" ]; then
+            log_message "Argument is a file: $arg"
+            "$PYTHON" "$RESOURCES/winmail_opener.py" "$arg" 2>&1 | tee -a "$LOG_FILE"
+            exit 0
+        elif [ -e "$arg" ]; then
+            log_message "Argument exists but is not a file: $arg"
+        else
+            # Try to clean up the path (remove quotes, etc.)
+            clean_arg=$(echo "$arg" | sed 's/^["'\'']\(.*\)["'\'']$/\\1/')
+            if [ "$clean_arg" != "$arg" ] && [ -f "$clean_arg" ]; then
+                log_message "Cleaned argument is a valid file: $clean_arg"
+                "$PYTHON" "$RESOURCES/winmail_opener.py" "$clean_arg" 2>&1 | tee -a "$LOG_FILE"
+                exit 0
+            else
+                log_message "Argument is not a valid file: $arg"
+            fi
+        fi
+    done
+    
+    # If we got arguments but none were valid files, show a notification
+    log_message "Received arguments but none were valid files"
+    osascript -e 'display notification "Received arguments but none were valid files" with title "WinmailOpener"'
+else
+    # No CLI arguments - check if we're being called by a document open event
+    log_message "No command line arguments, checking for document open events"
+    
+    # Try to get the file from the Open Document Apple Event
+    log_message "Checking for AppleEvent document opening"
+    file_from_event=$(osascript -e '
+        try
+            # Try to get the frontmost application and its documents
+            tell application "System Events"
+                set frontApp to first application process whose frontmost is true
+                if exists document 1 of frontApp then
+                    return POSIX path of (document 1 of frontApp as text)
+                end if
+            end tell
+            
+            # If that fails, try to get file from Finder selection
+            tell application "Finder"
+                if exists selection then
+                    set selectedItems to selection as alias list
+                    if (count of selectedItems) > 0 then
+                        set selectedItem to item 1 of selectedItems
+                        if class of selectedItem is document file then
+                            return POSIX path of selectedItem
+                        end if
+                    end if
+                end if
+            end tell
+            
+            # Last resort - try to get document from WinmailOpener itself
+            tell application "WinmailOpener"
+                try
+                    return POSIX path of (document 1 as alias)
+                on error
+                    return ""
+                end try
+            end tell
+        on error
+            return ""
+        end try
+    ')
+    
+    if [ -n "$file_from_event" ] && [ -f "$file_from_event" ]; then
+        log_message "Found file via AppleEvent: $file_from_event"
+        "$PYTHON" "$RESOURCES/winmail_opener.py" "$file_from_event" 2>&1 | tee -a "$LOG_FILE"
+        exit 0
+    fi
+    
+    # If AppleEvent didn't work, check for recently modified .dat files
+    log_message "Checking for recently modified .dat files"
+    recent_files=$(find ~/Downloads ~/Desktop ~/Documents -name "*.dat" -type f -mtime -1m 2>/dev/null | xargs ls -t 2>/dev/null | head -5)
+    
+    if [ -n "$recent_files" ]; then
+        log_message "Found recently modified .dat files:"
+        
+        # Process each recent file
         while IFS= read -r file; do
             if [ -f "$file" ]; then
-                echo "Processing recent file: $file" >> "$LOG_FILE"
+                log_message "Processing recent file: $file"
                 "$PYTHON" "$RESOURCES/winmail_opener.py" "$file" 2>&1 | tee -a "$LOG_FILE"
                 osascript -e "display notification \"Processed $file\" with title \"WinmailOpener\""
+                exit 0
             fi
-        done <<< "$FOUND_FILES"
-    else
-        # If no files found, show the dialog
-        echo "No arguments and no recent .dat files found, showing dialog" >> "$LOG_FILE"
-        osascript -e 'display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {"OK"} default button "OK" with title "WinmailOpener"'
+        done <<< "$recent_files"
     fi
+    
+    # If we get here, we couldn't find any file to process
+    log_message "No files found to process, showing dialog"
+    osascript -e 'display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {"OK"} default button "OK" with title "WinmailOpener"'
 fi
 ''')
     
