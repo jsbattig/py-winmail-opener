@@ -53,6 +53,17 @@ Reset the repository back to the formula-based Homebrew approach by returning to
 
 This reset was necessary because the cask-based approach was causing installation issues and didn't work as expected. The formula-based approach provides a simpler, more reliable installation method with standard Homebrew commands.
 
+### May 8, 2025: Fixed Dependency Management and SSL Support
+
+Addressed issues with Python dependencies and SSL support in the virtual environment:
+1. Updated `setup.py` to correctly declare all required dependencies (`tnefparse` and `chardet`)
+2. Modified Homebrew formulas to create and use a virtual environment with proper SSL support
+3. Removed auto-installation code from `winmail_opener.py` which was failing due to SSL module issues
+4. Added better error messages when dependencies are missing, directing users to proper reinstallation steps
+5. Ensured all dependencies are installed during the Homebrew formula installation process
+
+These changes improve reliability by ensuring all dependencies are installed during the initial package installation rather than attempting to auto-install them at runtime, which was failing due to SSL certificate validation issues in the virtual environment.
+
 ### April 29, 2025: Fixed Homebrew Formula and Installation
 
 Corrected an issue with the Homebrew formula that was causing installation problems on some systems. Updated the installation documentation to reflect the changes. The app now installs properly via `brew install jsbattig/winmail/py-winmail-opener`.

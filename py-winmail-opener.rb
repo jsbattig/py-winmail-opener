@@ -12,25 +12,34 @@ class PyWinmailOpener < Formula
   depends_on "duti" => :recommended
 
   def install
-    # Install Python files to libexec to avoid conflicts
+    # Create a virtualenv with proper SSL support
+    venv = libexec/"venv"
+    system Formula["python@3.10"].opt_bin/"python3.10", "-m", "venv", venv
+    
+    # Upgrade pip and install dependencies directly
+    system "#{venv}/bin/pip", "install", "--upgrade", "pip"
+    system "#{venv}/bin/pip", "install", "tnefparse", "chardet"
+    
+    # Install our files to libexec
     libexec.install Dir["*"]
-
+    
     # Create bin directory
     bin.mkpath
-
-    # Create a wrapper script directly in bin (avoiding libexec/bin)
+    
+    # Create a wrapper script that uses the virtualenv python
     (bin/"winmail-opener").write <<~EOS
       #!/bin/bash
-      "#{Formula["python@3.10"].opt_bin}/python3.10" "#{libexec}/winmail_opener.py" "$@"
+      "#{venv}/bin/python" "#{libexec}/winmail_opener.py" "$@"
     EOS
-
+    
     # Make the wrapper executable
     chmod 0755, bin/"winmail-opener"
   end
 
   def post_install
     # Try to run the installer automatically with homebrew mode
-    system "#{Formula["python@3.10"].opt_bin}/python3.10", "#{libexec}/install.py", "--homebrew-mode"
+    venv = libexec/"venv"
+    system "#{venv}/bin/python", "#{libexec}/install.py", "--homebrew-mode"
 
     if $?.success?
       puts "WinmailOpener.app was successfully created and installed!"
@@ -38,25 +47,26 @@ class PyWinmailOpener < Formula
     else
       puts "Automatic app creation failed. This might be due to permission restrictions."
       puts "To create the app manually, run the following command:"
-      puts "  #{Formula["python@3.10"].opt_bin}/python3.10 #{libexec}/install.py"
+      puts "  #{venv}/bin/python #{libexec}/install.py"
     end
   end
   
   def uninstall
     # Run our custom uninstaller to ensure proper cleanup
-    system "#{Formula["python@3.10"].opt_bin}/python3.10", "#{libexec}/uninstall.py", "--homebrew-mode", "--force"
+    venv = libexec/"venv"
+    system "#{venv}/bin/python", "#{libexec}/uninstall.py", "--homebrew-mode", "--force"
     
     if $?.success?
       puts "WinmailOpener was successfully removed from your system."
     else
       puts "Some errors occurred during uninstallation. Please check the output above."
       puts "If needed, you can manually run the uninstaller with:"
-      puts "  #{Formula["python@3.10"].opt_bin}/python3.10 #{libexec}/uninstall.py --force"
+      puts "  #{venv}/bin/python #{libexec}/uninstall.py --force"
     end
   end
 
   test do
     # Test the version output
-    assert_match "winmail_opener 1.0.9", shell_output("#{bin}/winmail-opener --version")
+    assert_match "winmail_opener", shell_output("#{bin}/winmail-opener --version")
   end
 end

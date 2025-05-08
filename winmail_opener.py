@@ -17,23 +17,24 @@ logging.basicConfig(
     filemode='a'
 )
 
-# Try to import required libraries with fallback mechanisms
+# Try to import required libraries with improved error messages
 try:
     import tnefparse  # Used for parsing Winmail.dat files
     TNEFPARSE_AVAILABLE = True
     logging.debug("Successfully imported tnefparse")
 except ImportError:
     TNEFPARSE_AVAILABLE = False
-    logging.error("Failed to import tnefparse - will try alternative methods")
-    print("Error: tnefparse module not found. Trying to install it now...")
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "tnefparse"])
-        import tnefparse
-        TNEFPARSE_AVAILABLE = True
-        logging.debug("Successfully installed and imported tnefparse")
-    except Exception as e:
-        logging.error(f"Could not auto-install tnefparse: {e}")
-        print(f"Could not install tnefparse automatically: {e}")
+    logging.error("Failed to import tnefparse")
+    print("""
+Error: Required dependency 'tnefparse' is not available.
+This usually means the application was not installed correctly.
+
+If you installed via Homebrew:
+  brew reinstall py-winmail-opener
+
+For manual installation:
+  pip install tnefparse
+""")
 
 try:
     import chardet  # Used for detecting character encoding of attachment names
@@ -42,14 +43,16 @@ try:
 except ImportError:
     CHARDET_AVAILABLE = False
     logging.error("Failed to import chardet")
-    print("Warning: chardet module not found. Character encoding detection may be limited.")
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "chardet"])
-        import chardet
-        CHARDET_AVAILABLE = True
-        logging.debug("Successfully installed and imported chardet")
-    except Exception as e:
-        logging.error(f"Could not auto-install chardet: {e}")
+    print("""
+Warning: Optional dependency 'chardet' is not available.
+Character encoding detection will be limited.
+
+If you installed via Homebrew:
+  brew reinstall py-winmail-opener
+
+For manual installation:
+  pip install chardet
+""")
 
 def extract_winmail_dat(winmail_dat_file):
     """

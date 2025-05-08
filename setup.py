@@ -1,6 +1,5 @@
 import setuptools
 
-# Trigger GitHub Actions workflow with a dummy change
 setuptools.setup(
     name="winmail_opener",
     version="2.0.3",
@@ -11,7 +10,8 @@ setuptools.setup(
     url="https://github.com/jsbattig/py-winmail-opener",
     py_modules=["winmail_opener"],
     install_requires=[
-        "extract_msg",
+        "tnefparse",
+        "chardet",
     ],
     entry_points={
         "console_scripts": [

@@ -55,6 +55,18 @@ Reverted the repository from the cask-based Homebrew approach back to the formul
 
 This change was made because the cask-based approach was causing installation issues and didn't work as expected. The formula-based approach provides a more reliable installation method using standard Homebrew commands.
 
+## Dependency Management Fix (May 8, 2025)
+
+Fixed issues with Python dependencies and SSL support:
+
+- Updated `setup.py` to correctly declare dependencies (`tnefparse` and `chardet`)
+- Modified Homebrew formulas to use a virtual environment with proper SSL support
+- Removed auto-installation code from `winmail_opener.py` which was failing due to SSL issues
+- Added better error messages when dependencies are missing, directing users to proper reinstallation steps
+- Ensured all dependencies are installed during the Homebrew formula installation process
+
+These changes address the SSL errors that were preventing the application from auto-installing dependencies and ensure a more reliable installation process.
+
 ## Active Decisions and Considerations
 
 - Maintaining code structure that prioritizes different content types in descending order: HTML → RTF → plain text
