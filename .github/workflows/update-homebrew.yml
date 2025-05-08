@@ -6,17 +6,12 @@ name: Update Homebrew Tap
 # The token needs write access to the homebrew-winmail repository
 
 on:
-  release:
-    types: [published, created, edited]
-  push:
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Tag name to use (e.g., v1.0.0)'
+        description: 'Tag name to use (e.g., v2.0.7)'
         required: true
-        default: 'v1.0.0'
+        type: string
 
 jobs:
   update-homebrew-formula:
@@ -31,24 +26,10 @@ jobs:
       
       - name: Set up environment variables
         run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
-            TAG_INPUT="${{ github.event.inputs.tag_name }}"
-            echo "VERSION=${TAG_INPUT#v}" >> $GITHUB_ENV
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            echo "TAG_NAME=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
-            echo "VERSION=${github.event.release.tag_name#v}" >> $GITHUB_ENV
-          elif [ "${{ github.event_name }}" == "push" ]; then
-            # Extract tag name from ref
-            TAG_NAME="${GITHUB_REF#refs/tags/}"
-            echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-            echo "VERSION=${TAG_NAME#v}" >> $GITHUB_ENV
-          else
-            # Fallback - try to get the latest tag
-            TAG_NAME=$(git describe --tags --abbrev=0)
-            echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-            echo "VERSION=${TAG_NAME#v}" >> $GITHUB_ENV
-          fi
+          # Only workflow_dispatch events are used now
+          echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+          TAG_INPUT="${{ github.event.inputs.tag_name }}"
+          echo "VERSION=${TAG_INPUT#v}" >> $GITHUB_ENV
           
           # Print debug information
           echo "Event name: ${{ github.event_name }}"
