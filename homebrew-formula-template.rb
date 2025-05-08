@@ -42,7 +42,7 @@ class PyWinmailOpener < Formula
     end
   end
   
-  def uninstall
+  def uninstall(args=nil)
     # Run our custom uninstaller to ensure proper cleanup
     system "#{Formula["python@3.10"].opt_bin}/python3.10", "#{libexec}/uninstall.py", "--homebrew-mode", "--force"
     

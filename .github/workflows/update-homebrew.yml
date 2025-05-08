@@ -68,6 +68,12 @@ jobs:
           sed -i "s|url \".*\"|url \"https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/${{ env.TAG_NAME }}.tar.gz\"|" py-winmail-opener.rb
           sed -i "s|sha256 \".*\"|sha256 \"${{ env.SHA256 }}\"|" py-winmail-opener.rb
           
+          # Ensure the uninstall method has the correct signature
+          if grep -q "def uninstall$" py-winmail-opener.rb; then
+            echo "Fixing uninstall method signature..."
+            sed -i "s/def uninstall$/def uninstall(args=nil)/" py-winmail-opener.rb
+          fi
+          
           # First examine the formula to understand its structure
           echo "Current formula structure:"
           cat py-winmail-opener.rb
