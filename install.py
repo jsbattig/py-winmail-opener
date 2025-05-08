@@ -204,7 +204,7 @@ exit 0
     # Create temp AppleScript file
     applescript_path = os.path.join(script_dir, "winmail_opener.applescript")
     with open(applescript_path, "w") as f:
-        f.write("""
+        f.write(f"""
 -- Simple Winmail.dat file handler
 -- This script handles opening .dat files without any launch agents
 
@@ -236,16 +236,16 @@ on open theFiles
                 do shell script "'" & (item 1 of possibleHandlers) & "' '" & filePath & "'"
             else
                 -- Ultimate fallback if no handler script is found
-                display dialog "Error: Could not find the winmail_handler.sh script." buttons {"OK"} default button "OK" with title "WinmailOpener Error"
+                display dialog "Error: Could not find the winmail_handler.sh script." buttons {{"OK"}} default button "OK" with title "WinmailOpener Error"
             end if
         end if
     end if
 end open
 
 on run
-    display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {"OK"} default button "OK" with title "WinmailOpener"
+    display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {{"OK"}} default button "OK" with title "WinmailOpener"
 end run
-""")
+""".replace("{{handler_script_path}}", handler_script_path))
     
     # Compile the AppleScript to a temporary app
     temp_app_path = os.path.join(tempfile.mkdtemp(), "TempWinmailOpener.app")
