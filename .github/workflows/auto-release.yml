@@ -99,13 +99,11 @@ jobs:
           set -e  # Exit immediately if any command fails
           
           # Get current version from setup.py (using grep compatible with macOS)
-          current_version=$(grep 'version=' setup.py | sed 's/.*version="\([^"]*\)".*/\1/') || { echo "Failed to extract current version from setup.py"; exit 1; }
+          current_version=$(grep 'version=' setup.py | sed -E 's/.*version="([^"]+)".*/\1/') || { echo "Failed to extract current version from setup.py"; exit 1; }
           echo "Current version: $current_version"
-          
-          if [ -z "$current_version" ]; then
-            echo "Error: Could not extract version from setup.py"
-            echo "Printing first 10 lines of setup.py for debugging:"
-            head -10 setup.py
+
+          if [ ! -f src/winmail_opener.py ]; then
+            echo "Error: src/winmail_opener.py not found"
             exit 1
           fi
           
