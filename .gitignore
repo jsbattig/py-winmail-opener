@@ -23,6 +23,10 @@ output/
 *.log
 winmail_handler.sh
 winmail_opener.applescript
+*.app/
+*.app
+*.dmg
+WinmailOpener*.*
 
 # Development environment
 .idea/

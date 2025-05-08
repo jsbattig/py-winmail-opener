@@ -1,3 +1,0 @@
-#!/bin/bash
-# Fallback to system Python
-/usr/bin/env python3 "$@"
