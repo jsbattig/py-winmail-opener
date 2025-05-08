@@ -203,8 +203,9 @@ exit 0
     
     # Create temp AppleScript file
     applescript_path = os.path.join(script_dir, "winmail_opener.applescript")
-    with open(applescript_path, "w") as f:
-        f.write(f"""
+    
+    # Define the AppleScript template
+    applescript_template = """
 -- Simple Winmail.dat file handler
 -- This script handles opening .dat files without any launch agents
 
@@ -221,7 +222,7 @@ on open theFiles
         do shell script "'" & homebrewHandler & "' '" & filePath & "'"
     else
         -- Fallback to original handler script path if it exists
-        set originalHandler to "{handler_script_path}"
+        set originalHandler to "$HANDLER_SCRIPT_PATH$"
         set originalExists to do shell script "[ -f '" & originalHandler & "' ] && echo 'yes' || echo 'no'"
         
         if originalExists is "yes" then
@@ -236,16 +237,23 @@ on open theFiles
                 do shell script "'" & (item 1 of possibleHandlers) & "' '" & filePath & "'"
             else
                 -- Ultimate fallback if no handler script is found
-                display dialog "Error: Could not find the winmail_handler.sh script." buttons {{"OK"}} default button "OK" with title "WinmailOpener Error"
+                display dialog "Error: Could not find the winmail_handler.sh script." buttons {"OK"} default button "OK" with title "WinmailOpener Error"
             end if
         end if
     end if
 end open
 
 on run
-    display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {{"OK"}} default button "OK" with title "WinmailOpener"
+    display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {"OK"} default button "OK" with title "WinmailOpener"
 end run
-""".replace("{{handler_script_path}}", handler_script_path))
+"""
+    
+    # Replace the placeholder with the actual handler script path
+    applescript_content = applescript_template.replace("$HANDLER_SCRIPT_PATH$", handler_script_path)
+    
+    # Write the AppleScript with the substituted path
+    with open(applescript_path, "w") as f:
+        f.write(applescript_content)
     
     # Compile the AppleScript to a temporary app
     temp_app_path = os.path.join(tempfile.mkdtemp(), "TempWinmailOpener.app")
