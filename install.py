@@ -403,6 +403,7 @@ def main():
     homebrew_mode = args.homebrew_mode
     
     print("=== WinmailOpener Installation ===")
+# Version 2.0.4 with version-independent paths
 # Version 2.0.3 with version-independent paths
 # Version 2.0.2 with version-independent paths
 # Version 2.0.1 with version-independent paths
