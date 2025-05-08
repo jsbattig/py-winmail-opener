@@ -56,6 +56,16 @@ You can also remove the tap if you no longer need it:
 brew untap jsbattig/winmail
 ```
 
+If you encounter errors during Homebrew uninstallation, you can verify and fix any remaining components:
+
+```bash
+# Check for any remaining components
+python py-winmail-opener/verify_uninstall.py
+
+# Force complete removal if needed
+python py-winmail-opener/uninstall.py --force --homebrew-mode
+```
+
 #### Manual Uninstallation
 
 If you installed manually, you can remove the application completely:
@@ -70,6 +80,7 @@ The uninstaller will:
 2. Reset file associations for .dat files
 3. Clean up handler scripts and log files
 4. Remove the virtual environment
+5. Remove Homebrew-specific files if detected
 
 Uninstaller options:
 ```
@@ -78,6 +89,12 @@ python py-winmail-opener/uninstall.py --keep-venv
 
 # Keep log files for troubleshooting
 python py-winmail-opener/uninstall.py --keep-logs
+
+# Force removal even if components are not found
+python py-winmail-opener/uninstall.py --force
+
+# Clean up Homebrew-specific files
+python py-winmail-opener/uninstall.py --homebrew-mode
 ```
 
 ### Setting Up File Associations

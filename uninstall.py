@@ -4,24 +4,35 @@ import sys
 import shutil
 import subprocess
 import argparse
+import glob
 
-def uninstall_app():
+def uninstall_app(force=False):
     """
     Remove the WinmailOpener application bundle from ~/Applications.
     """
-    app_path = os.path.expanduser("~/Applications/WinmailOpener.app")
-    if os.path.exists(app_path):
-        print(f"Removing application: {app_path}")
-        try:
-            shutil.rmtree(app_path)
-            print("Application removed successfully.")
-        except Exception as e:
-            print(f"Error removing application: {e}")
-            return False
-    else:
-        print("Application not found in ~/Applications. It may have been removed already.")
+    app_paths = [
+        os.path.expanduser("~/Applications/WinmailOpener.app"),
+        "/Applications/WinmailOpener.app"  # Check system Applications directory too
+    ]
     
-    return True
+    success = True
+    app_found = False
+    
+    for app_path in app_paths:
+        if os.path.exists(app_path):
+            app_found = True
+            print(f"Removing application: {app_path}")
+            try:
+                shutil.rmtree(app_path)
+                print(f"Application removed successfully from {app_path}.")
+            except Exception as e:
+                print(f"Error removing application from {app_path}: {e}")
+                success = False
+    
+    if not app_found and not force:
+        print("Application not found in Applications folders. It may have been removed already.")
+    
+    return success
 
 def remove_file_associations():
     """
@@ -138,6 +149,68 @@ def remove_log_files():
     
     return True
 
+def remove_homebrew_files(force=False):
+    """
+    Remove Homebrew-specific files for py-winmail-opener.
+    """
+    # Potential Homebrew Cellar directories
+    cellar_paths = [
+        "/usr/local/Cellar/py-winmail-opener",
+        "/opt/homebrew/Cellar/py-winmail-opener"
+    ]
+    
+    # Potential binary wrapper paths
+    bin_paths = [
+        "/usr/local/bin/winmail-opener",
+        "/opt/homebrew/bin/winmail-opener"
+    ]
+    
+    success = True
+    
+    # Clean up Cellar directories
+    found_cellar = False
+    for cellar_path in cellar_paths:
+        if os.path.exists(cellar_path):
+            found_cellar = True
+            print(f"Removing Homebrew Cellar directory: {cellar_path}")
+            try:
+                # Find all version directories
+                version_dirs = glob.glob(os.path.join(cellar_path, "*"))
+                for version_dir in version_dirs:
+                    if os.path.isdir(version_dir):
+                        print(f"Removing version directory: {version_dir}")
+                        shutil.rmtree(version_dir)
+                
+                # Try to remove the main directory if empty
+                if not os.listdir(cellar_path):
+                    os.rmdir(cellar_path)
+                
+                print(f"Homebrew Cellar directory removed successfully.")
+            except Exception as e:
+                print(f"Error removing Homebrew Cellar directory: {e}")
+                success = False
+    
+    if not found_cellar and not force:
+        print("No Homebrew Cellar directory found for py-winmail-opener.")
+    
+    # Clean up binary wrappers
+    found_bin = False
+    for bin_path in bin_paths:
+        if os.path.exists(bin_path):
+            found_bin = True
+            print(f"Removing Homebrew binary wrapper: {bin_path}")
+            try:
+                os.remove(bin_path)
+                print(f"Homebrew binary wrapper removed successfully.")
+            except Exception as e:
+                print(f"Error removing Homebrew binary wrapper: {e}")
+                success = False
+    
+    if not found_bin and not force:
+        print("No Homebrew binary wrapper found for winmail-opener.")
+    
+    return success
+
 def main():
     """
     Main function to handle the uninstallation process.
@@ -145,6 +218,8 @@ def main():
     parser = argparse.ArgumentParser(description="Uninstall Winmail.dat Opener")
     parser.add_argument("--keep-venv", action="store_true", help="Keep the virtual environment")
     parser.add_argument("--keep-logs", action="store_true", help="Keep log files")
+    parser.add_argument("--homebrew-mode", action="store_true", help="Run in Homebrew uninstallation mode")
+    parser.add_argument("--force", action="store_true", help="Force removal even if components are not found")
     args = parser.parse_args()
     
     print("=== Winmail.dat Opener Uninstaller ===")
@@ -153,8 +228,14 @@ def main():
     success = True
     
     # Step 1: Remove the application bundle
-    if not uninstall_app():
+    if not uninstall_app(args.force):
         success = False
+        
+    # Step 1b: Remove Homebrew files if in homebrew mode or if explicitly requested
+    if args.homebrew_mode or args.force:
+        print("\nDetected Homebrew installation mode. Cleaning up Homebrew files...")
+        if not remove_homebrew_files(args.force):
+            success = False
     
     # Step 2: Remove file associations
     if not remove_file_associations():

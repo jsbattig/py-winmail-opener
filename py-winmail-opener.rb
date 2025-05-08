@@ -41,6 +41,19 @@ class PyWinmailOpener < Formula
       puts "  #{Formula["python@3.10"].opt_bin}/python3.10 #{libexec}/install.py"
     end
   end
+  
+  def uninstall
+    # Run our custom uninstaller to ensure proper cleanup
+    system "#{Formula["python@3.10"].opt_bin}/python3.10", "#{libexec}/uninstall.py", "--homebrew-mode", "--force"
+    
+    if $?.success?
+      puts "WinmailOpener was successfully removed from your system."
+    else
+      puts "Some errors occurred during uninstallation. Please check the output above."
+      puts "If needed, you can manually run the uninstaller with:"
+      puts "  #{Formula["python@3.10"].opt_bin}/python3.10 #{libexec}/uninstall.py --force"
+    end
+  end
 
   test do
     # Test the version output
