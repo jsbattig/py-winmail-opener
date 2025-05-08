@@ -197,14 +197,31 @@ fi
     # Make launcher executable
     os.chmod(os.path.join(macos_dir, 'WinmailOpener'), 0o755)
     
-    # Add the file association fix script to Resources
-    print("Adding file association fix script...")
+    # Add the file association fix scripts to Resources
+    print("Adding file association fix scripts...")
     src_dir = os.path.dirname(os.path.abspath(__file__))
-    fix_script_source = os.path.join(src_dir, "fix_file_association.py")
-    fix_script_target = os.path.join(resources_dir, "fix_file_association.py")
     
-    if os.path.exists(fix_script_source):
-        shutil.copy(fix_script_source, fix_script_target)
+    # Copy Python fix script
+    fix_py_source = os.path.join(src_dir, "fix_file_association.py")
+    fix_py_target = os.path.join(resources_dir, "fix_file_association.py")
+    
+    if os.path.exists(fix_py_source):
+        shutil.copy(fix_py_source, fix_py_target)
+        os.chmod(fix_py_target, 0o755)  # Make executable
+        print(f"  Copied {fix_py_source} to {fix_py_target}")
+    else:
+        print(f"  Warning: {fix_py_source} not found")
+    
+    # Copy shell fix script
+    fix_sh_source = os.path.join(src_dir, "fix_associations.sh")
+    fix_sh_target = os.path.join(resources_dir, "fix_associations.sh")
+    
+    if os.path.exists(fix_sh_source):
+        shutil.copy(fix_sh_source, fix_sh_target)
+        os.chmod(fix_sh_target, 0o755)  # Make executable
+        print(f"  Copied {fix_sh_source} to {fix_sh_target}")
+    else:
+        print(f"  Warning: {fix_sh_source} not found")
     
     # Create launcher symlink
     print("Creating command-line symlink...")
