@@ -164,6 +164,97 @@ python py-winmail-opener/test_winmail_opener.py
 
 ## For Developers
 
+### Development Workflow with Homebrew Cask
+
+#### 1. Regular Development
+
+For routine code changes that don't affect packaging:
+
+```bash
+# Make code changes to python files
+# Test locally using the development runner
+python winmail_opener.py path/to/test/winmail.dat
+```
+
+#### 2. Building and Testing App Bundle
+
+When changes might affect the app bundle:
+
+```bash
+# Build local app bundle for testing
+python build_app.py --dev
+
+# Test the built app bundle
+open WinmailOpener-dev.app
+```
+
+#### 3. Testing Cask Installation
+
+For testing the complete cask installation flow:
+
+```bash
+# Create a DMG for local testing
+python build_app.py --dmg
+
+# Install the cask locally from the DMG
+brew install --cask ./WinmailOpener-1.0.0.dmg
+
+# Test the installed cask
+open -a WinmailOpener
+```
+
+#### 4. Debugging Cask Issues
+
+If you encounter issues with cask installation:
+
+```bash
+# Get detailed information about cask installation
+brew cask info py-winmail-opener
+
+# Verify cask structure
+brew audit --cask --online py-winmail-opener
+
+# Install with verbose output
+brew install --cask --verbose py-winmail-opener
+```
+
+#### 5. Cask Publication Process
+
+1. **Build and Test Locally**:
+   - Build app bundle and DMG
+   - Test locally with `brew install --cask ./path/to/dmg`
+   - Verify all functionality works
+
+2. **Release Process**:
+   - Push changes to GitHub
+   - GitHub Actions will:
+     * Build the app bundle
+     * Create and sign the DMG
+     * Create a GitHub release with the DMG
+     * Update the cask formula in the homebrew tap
+
+3. **Post-Release Verification**:
+   - Install from the tap: `brew install --cask py-winmail-opener`
+   - Verify installation and functionality
+   - If issues are found, fix and push a new release
+
+#### 6. Best Practices
+
+- **Always test DMG installation locally** before pushing to GitHub
+- **Manage version numbers carefully** in setup.py and build_app.py
+- **Ensure the app bundle is self-contained** with all dependencies included
+- **Validate cask formula syntax** with `brew audit --cask`
+- **Consider testing in a clean environment** (VM or separate user account)
+- **Check file permissions** within the app bundle
+
+#### 7. Common Issues and Solutions
+
+- **Code signing issues**: Ensure proper code signing in build_app.py
+- **DMG mounting problems**: Test DMG mounting manually before cask creation
+- **Permission errors**: Check file permissions in the app bundle
+- **Missing dependencies**: Ensure all dependencies are bundled properly
+- **App not launching**: Check bundle structure and executable permissions
+
 ### Automated Release Process
 
 This project features a fully automated release system that creates new releases and updates the Homebrew formula automatically when changes are pushed to the master branch.
