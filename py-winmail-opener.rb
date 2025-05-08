@@ -1,9 +1,10 @@
 class PyWinmailOpener < Formula
   desc "Extract attachments and email body from Winmail.dat files"
   homepage "https://github.com/jsbattig/py-winmail-opener"
-  url "https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/v1.0.9.tar.gz"
-  sha256 "d9125ddfdd57897422d70edf42543c7f6bde21c14526b52121f99fc494665aad"
+  url "https://github.com/jsbattig/py-winmail-opener/archive/refs/tags/v2.0.4.tar.gz"
+  sha256 "12c44587cd01fe55ac201a688ffb2b9e501388c8a61254ceff75b1f0351f800e"
   license "MIT"
+  revision 1
 
   # Skip binary validation for all our files
   skip_clean :all
@@ -19,6 +20,9 @@ class PyWinmailOpener < Formula
     # Upgrade pip and install dependencies directly
     system "#{venv}/bin/pip", "install", "--upgrade", "pip"
     system "#{venv}/bin/pip", "install", "tnefparse", "chardet"
+    
+    # Skip cleanup of script files to avoid permission warnings during upgrade
+    inreplace "install.py", "os.chmod(handler_script_path, 0o755)", "os.chmod(handler_script_path, 0o775)"
     
     # Install our files to libexec
     libexec.install Dir["*"]
@@ -48,6 +52,18 @@ class PyWinmailOpener < Formula
       puts "Automatic app creation failed. This might be due to permission restrictions."
       puts "To create the app manually, run the following command:"
       puts "  #{venv}/bin/python #{libexec}/install.py"
+    end
+  end
+  
+  def pre_uninstall
+    # Fix permissions on files that might cause apply2files errors during cleanup
+    begin
+      # Execute permission fix in uninstall.py
+      venv = libexec/"venv"
+      system "#{venv}/bin/python", "#{libexec}/uninstall.py", "--homebrew-mode", "--force", "--keep-logs", "--keep-venv"
+    rescue
+      # Don't fail if this doesn't work - the main uninstall will still run
+      opoo "Pre-uninstall cleanup encountered errors but will continue with uninstallation"
     end
   end
   

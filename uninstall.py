@@ -80,16 +80,32 @@ def clean_handler_script():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     handler_script = os.path.join(script_dir, "winmail_handler.sh")
     
-    if os.path.exists(handler_script):
-        print(f"Removing handler script: {handler_script}")
-        try:
-            os.remove(handler_script)
-            print("Handler script removed successfully.")
-        except Exception as e:
-            print(f"Error removing handler script: {e}")
-            return False
-    else:
-        print("Handler script not found. It may have been removed already.")
+    # Also check for handler scripts in Homebrew locations
+    homebrew_script_paths = [
+        "/usr/local/opt/py-winmail-opener/libexec/winmail_handler.sh",  # Version-independent path
+        # Search for scripts in old Cellar locations
+        *glob.glob("/usr/local/Cellar/py-winmail-opener/*/libexec/winmail_handler.sh")
+    ]
+    
+    all_scripts = [handler_script] + homebrew_script_paths
+    
+    for script_path in all_scripts:
+        if os.path.exists(script_path):
+            print(f"Removing handler script: {script_path}")
+            try:
+                # Make sure the file is writable before removal
+                try:
+                    os.chmod(script_path, 0o666)
+                except Exception as e:
+                    print(f"Warning: Could not update permissions on handler script: {e}")
+                    
+                os.remove(script_path)
+                print(f"Handler script at {script_path} removed successfully.")
+            except Exception as e:
+                print(f"Error removing handler script at {script_path}: {e}")
+                # Continue with other scripts even if one fails
+        else:
+            print(f"Handler script not found at {script_path}.")
     
     return True
 
@@ -165,7 +181,30 @@ def remove_homebrew_files(force=False):
         "/opt/homebrew/bin/winmail-opener"
     ]
     
+    # Potential opt directories
+    opt_paths = [
+        "/usr/local/opt/py-winmail-opener",
+        "/opt/homebrew/opt/py-winmail-opener"
+    ]
+    
     success = True
+    
+    # First, try to fix permissions on problematic files to prevent apply2files errors
+    try:
+        # Fix permissions in any existing Cellar directories
+        for cellar_path in cellar_paths:
+            if os.path.exists(cellar_path):
+                print(f"Fixing permissions in Homebrew Cellar directory: {cellar_path}")
+                # Find all shell scripts and fix their permissions
+                shell_scripts = glob.glob(os.path.join(cellar_path, "**/*.sh"), recursive=True)
+                for script in shell_scripts:
+                    try:
+                        if os.path.exists(script):
+                            os.chmod(script, 0o777)  # Make fully accessible for cleanup
+                    except Exception as e:
+                        print(f"Warning: Could not update permissions on {script}: {e}")
+    except Exception as e:
+        print(f"Warning: Error while fixing permissions: {e}")
     
     # Clean up Cellar directories
     found_cellar = False
@@ -179,15 +218,56 @@ def remove_homebrew_files(force=False):
                 for version_dir in version_dirs:
                     if os.path.isdir(version_dir):
                         print(f"Removing version directory: {version_dir}")
-                        shutil.rmtree(version_dir)
+                        try:
+                            shutil.rmtree(version_dir)
+                        except Exception as e:
+                            print(f"Error removing directory {version_dir}: {e}")
+                            # Try removing files one by one
+                            try:
+                                for root, dirs, files in os.walk(version_dir, topdown=False):
+                                    for file in files:
+                                        file_path = os.path.join(root, file)
+                                        try:
+                                            os.chmod(file_path, 0o777)
+                                            os.remove(file_path)
+                                        except Exception as e2:
+                                            print(f"Could not remove file {file_path}: {e2}")
+                                    for dir in dirs:
+                                        dir_path = os.path.join(root, dir)
+                                        try:
+                                            os.rmdir(dir_path)
+                                        except Exception as e2:
+                                            print(f"Could not remove directory {dir_path}: {e2}")
+                            except Exception as e3:
+                                print(f"Error during manual cleanup: {e3}")
                 
                 # Try to remove the main directory if empty
-                if not os.listdir(cellar_path):
+                if os.path.exists(cellar_path) and not os.listdir(cellar_path):
                     os.rmdir(cellar_path)
                 
                 print(f"Homebrew Cellar directory removed successfully.")
             except Exception as e:
                 print(f"Error removing Homebrew Cellar directory: {e}")
+                success = False
+    
+    # Clean up opt directories
+    for opt_path in opt_paths:
+        if os.path.exists(opt_path):
+            print(f"Removing Homebrew opt directory: {opt_path}")
+            try:
+                # Fix permissions before removing
+                for root, dirs, files in os.walk(opt_path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        try:
+                            os.chmod(file_path, 0o777)
+                        except Exception:
+                            pass
+                
+                shutil.rmtree(opt_path)
+                print(f"Homebrew opt directory removed successfully.")
+            except Exception as e:
+                print(f"Error removing Homebrew opt directory: {e}")
                 success = False
     
     if not found_cellar and not force:

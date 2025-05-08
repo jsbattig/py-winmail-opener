@@ -166,6 +166,22 @@ exit 0
     # Make the handler script executable
     os.chmod(handler_script_path, 0o755)
     
+    # Ensure Homebrew can clean it up later
+    try:
+        # Make the file writable by the group
+        os.chmod(handler_script_path, 0o775)
+        # If we're in Homebrew mode, ensure the file is owned by the Homebrew group
+        if homebrew_mode:
+            # Try to get Homebrew's group
+            brew_group = subprocess.check_output(["stat", "-f", "%Sg", 
+                                                "/usr/local/bin/brew"], 
+                                                text=True).strip()
+            subprocess.run(["chgrp", brew_group, handler_script_path], 
+                          check=False)
+    except Exception as e:
+        print(f"Note: Could not update file permissions for cleanup: {e}")
+        print("This may cause warnings during future upgrades but won't affect functionality.")
+    
     # Create the AppleScript app
     print("Creating AppleScript application...")
     if homebrew_mode:
@@ -181,7 +197,18 @@ exit 0
             # Copy handler_script to opt directory for version independence
             opt_handler_path = os.path.join(opt_dir, "winmail_handler.sh")
             shutil.copy2(handler_script_path, opt_handler_path)
-            os.chmod(opt_handler_path, 0o755)
+            os.chmod(opt_handler_path, 0o775)  # More permissive for cleanup
+            
+            # Ensure Homebrew can clean it up later
+            try:
+                # Try to get Homebrew's group
+                brew_group = subprocess.check_output(["stat", "-f", "%Sg", 
+                                                    "/usr/local/bin/brew"], 
+                                                    text=True).strip()
+                subprocess.run(["chgrp", brew_group, opt_handler_path], 
+                              check=False)
+            except Exception as e:
+                print(f"Note: Could not update file permissions for cleanup: {e}")
             
             # Copy winmail_opener.py to opt directory for version independence
             opt_script_path = os.path.join(opt_dir, "winmail_opener.py")
