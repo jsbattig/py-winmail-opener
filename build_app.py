@@ -117,7 +117,7 @@ def build_app_bundle(version, dev_mode=False):
     with open(os.path.join(macos_dir, 'WinmailOpener'), 'w') as f:
         f.write('''#!/bin/bash
 # Get the directory containing this script
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "'''+r'${BASH_SOURCE[0]}'+'''" )" && pwd )"
 RESOURCES="$DIR/../Resources"
 PYTHON="$RESOURCES/python/bin/python3"
 
@@ -151,7 +151,7 @@ fi
     with open(cli_path, 'w') as f:
         f.write(f'''#!/bin/bash
 # This is a CLI wrapper for the WinmailOpener application
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "'''+r'${BASH_SOURCE[0]}'+'''" )" && pwd )"
 "$DIR/WinmailOpener" "$@"
 ''')
     os.chmod(cli_path, 0o755)
