@@ -81,41 +81,31 @@ jobs:
         if: env.CASK_FROM_RELEASE != 'true'
         run: |
           cd homebrew-winmail
-          
-          # Create Casks directory if it doesn't exist
           mkdir -p Casks
           
-          # Create cask formula - avoid indentation issues with YAML by using variables
-          CASK_CONTENT=$(cat <<'ENDCASK'
-cask "py-winmail-opener" do
-  version "${VERSION}"
-  sha256 "${SHA256}"
-  
-  url "https://github.com/jsbattig/py-winmail-opener/releases/download/v#{version}/WinmailOpener-#{version}.dmg"
-  name "WinmailOpener"
-  desc "Extract attachments and email body from Winmail.dat files"
-  homepage "https://github.com/jsbattig/py-winmail-opener"
-  
-  app "WinmailOpener-#{version}.app"
-  
-  binary "#{appdir}/WinmailOpener-#{version}.app/Contents/MacOS/winmail-opener", target: "winmail-opener"
-  
-  uninstall delete: "/usr/local/bin/winmail-opener"
-  
-  zap trash: [
-    "~/Library/Logs/WinmailOpener_log.txt",
-    "~/Library/Preferences/com.github.jsbattig.winmailopener.plist"
-  ]
-end
-ENDCASK
-)
-          
-          # Replace environment variables
-          CASK_CONTENT=${CASK_CONTENT//\$\{VERSION\}/$VERSION}
-          CASK_CONTENT=${CASK_CONTENT//\$\{SHA256\}/$SHA256}
-          
-          # Write to file
-          echo "$CASK_CONTENT" > Casks/py-winmail-opener.rb
+          # Create the cask file directly
+          cat > Casks/py-winmail-opener.rb << EOF
+          cask "py-winmail-opener" do
+            version "${{ env.VERSION }}"
+            sha256 "${{ env.SHA256 }}"
+            
+            url "https://github.com/jsbattig/py-winmail-opener/releases/download/v#{version}/WinmailOpener-#{version}.dmg"
+            name "WinmailOpener"
+            desc "Extract attachments and email body from Winmail.dat files"
+            homepage "https://github.com/jsbattig/py-winmail-opener"
+            
+            app "WinmailOpener-#{version}.app"
+            
+            binary "#{appdir}/WinmailOpener-#{version}.app/Contents/MacOS/winmail-opener", target: "winmail-opener"
+            
+            uninstall delete: "/usr/local/bin/winmail-opener"
+            
+            zap trash: [
+              "~/Library/Logs/WinmailOpener_log.txt",
+              "~/Library/Preferences/com.github.jsbattig.winmailopener.plist"
+            ]
+          end
+          EOF
           
           echo "Cask formula created:"
           cat Casks/py-winmail-opener.rb
