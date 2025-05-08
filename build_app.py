@@ -118,9 +118,12 @@ def build_app_bundle(version, dev_mode=False):
                 'CFBundleTypeRole': 'Editor',
                 'LSHandlerRank': 'Owner',
                 'LSItemContentTypes': ['public.data', 'com.microsoft.winmail.dat'],
-                'LSTypeIsPackage': False
+                'LSTypeIsPackage': False,
+                'NSDocumentClass': 'NSDocument',
+                'CFBundleTypeIconFile': 'AppIcon.icns'
             }
-        ]
+        ],
+        'OSAScriptingDefinition': 'DocumentHandler.scpt'
     }
     
     with open(os.path.join(contents_dir, 'Info.plist'), 'wb') as f:
@@ -132,6 +135,18 @@ def build_app_bundle(version, dev_mode=False):
     icon_path = os.path.join(resources_dir, 'AppIcon.icns')
     # This is a placeholder - in a real implementation, you would copy an actual icon file
     # shutil.copy(os.path.join(src_dir, 'assets', 'icon.icns'), icon_path)
+    
+    # Add compiled AppleScript handler for document opening
+    print("Creating AppleScript document handler...")
+    doc_handler_path = os.path.join(src_dir, "document_handler.applescript")
+    if os.path.exists(doc_handler_path):
+        compiled_handler = os.path.join(resources_dir, "DocumentHandler.scpt")
+        if compile_applescript(doc_handler_path, compiled_handler):
+            print(f"  AppleScript document handler compiled to {compiled_handler}")
+        else:
+            print("  Warning: Failed to compile AppleScript document handler")
+    else:
+        print(f"  Warning: document_handler.applescript not found at {doc_handler_path}")
     
     # Copy Python script files to Resources
     print("Copying Python scripts...")
@@ -203,34 +218,11 @@ else
     log_message "Checking for AppleEvent document opening"
     file_from_event=$(osascript -e '
         try
-            # Try to get the frontmost application and its documents
-            tell application "System Events"
-                set frontApp to first application process whose frontmost is true
-                if exists document 1 of frontApp then
-                    return POSIX path of (document 1 of frontApp as text)
-                end if
-            end tell
-            
-            # If that fails, try to get file from Finder selection
             tell application "Finder"
-                if exists selection then
-                    set selectedItems to selection as alias list
-                    if (count of selectedItems) > 0 then
-                        set selectedItem to item 1 of selectedItems
-                        if class of selectedItem is document file then
-                            return POSIX path of selectedItem
-                        end if
-                    end if
+                set theSelection to selection as alias list
+                if (count of theSelection) > 0 then
+                    return POSIX path of (item 1 of theSelection as text)
                 end if
-            end tell
-            
-            # Last resort - try to get document from WinmailOpener itself
-            tell application "WinmailOpener"
-                try
-                    return POSIX path of (document 1 as alias)
-                on error
-                    return ""
-                end try
             end tell
         on error
             return ""
@@ -255,7 +247,7 @@ else
             if [ -f "$file" ]; then
                 log_message "Processing recent file: $file"
                 "$PYTHON" "$RESOURCES/winmail_opener.py" "$file" 2>&1 | tee -a "$LOG_FILE"
-                osascript -e "display notification \"Processed $file\" with title \"WinmailOpener\""
+                osascript -e 'display notification "Processed '"$file"'" with title "WinmailOpener"'
                 exit 0
             fi
         done <<< "$recent_files"
