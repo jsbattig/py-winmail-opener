@@ -130,11 +130,11 @@ jobs:
           echo "winmail_opener.py before update:"
           grep "__version__" winmail_opener.py
           
-          # Update version in setup.py
-          sed -i "s/version=\"$current_version\"/version=\"$new_version\"/g" setup.py || { echo "Failed to update version in setup.py"; exit 1; }
+          # Update version in setup.py (macOS compatible sed)
+          sed -i '' "s/version=\"$current_version\"/version=\"$new_version\"/g" setup.py || { echo "Failed to update version in setup.py"; exit 1; }
           
-          # Update version in winmail_opener.py
-          sed -i "s/__version__ = \"$current_version\"/__version__ = \"$new_version\"/g" winmail_opener.py || { echo "Failed to update version in winmail_opener.py"; exit 1; }
+          # Update version in winmail_opener.py (macOS compatible sed)
+          sed -i '' "s/__version__ = \"$current_version\"/__version__ = \"$new_version\"/g" winmail_opener.py || { echo "Failed to update version in winmail_opener.py"; exit 1; }
           
           # Verify updates
           echo "setup.py after update:"
@@ -182,10 +182,11 @@ jobs:
           # Create Casks directory in homebrew repo
           NEW_VERSION="${{ steps.bump_version.outputs.new_version }}"
           
-          # Update cask template with version and sha256
-          sed -e "s/VERSION_PLACEHOLDER/$NEW_VERSION/g" \
-              -e "s/SHA256_PLACEHOLDER/$SHA256/g" \
-              py-winmail-opener-cask.rb > py-winmail-opener-updated-cask.rb
+          # Update cask template with version and sha256 (macOS compatible)
+          cat py-winmail-opener-cask.rb | \
+              sed "s/VERSION_PLACEHOLDER/$NEW_VERSION/g" | \
+              sed "s/SHA256_PLACEHOLDER/$SHA256/g" \
+              > py-winmail-opener-updated-cask.rb
           
           cat py-winmail-opener-updated-cask.rb
       
