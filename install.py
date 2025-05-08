@@ -98,7 +98,7 @@ def create_applescript_handler(venv_python=None, homebrew_mode=False):
     # Create handler script - this will be called by the AppleScript app
     print(f"Creating handler script at {handler_script_path}")
     with open(handler_script_path, "w") as f:
-        f.write(f"""#!/bin/bash
+        f.write("""#!/bin/bash
 
 # Log file for debugging
 LOG_FILE=~/WinmailOpener_log.txt
@@ -111,7 +111,7 @@ echo "Arguments received: $@" >> "$LOG_FILE"
 # If no arguments, show a dialog
 if [ $# -eq 0 ]; then
     echo "No arguments provided - showing dialog" >> "$LOG_FILE"
-    osascript -e 'display dialog "Please double-click a winmail.dat file instead of launching the app directly." buttons {{"OK"}} default button "OK" with title "WinmailOpener"'
+    osascript -e 'display dialog "Please double-click a winmail.dat file instead of launching the app directly." buttons {"OK"} default button "OK" with title "WinmailOpener"'
     exit 0
 fi
 
@@ -119,8 +119,43 @@ fi
 FILEPATH="$1"
 echo "Processing file: $FILEPATH" >> "$LOG_FILE"
 
+# Try to find the winmail_opener.py script and Python interpreter
+# First try the Homebrew opt (version-independent) directory
+WINMAIL_SCRIPT="/usr/local/opt/py-winmail-opener/libexec/winmail_opener.py"
+VENV_PYTHON=""
+
+# Check for Python in various locations
+if [ -f "/usr/local/opt/py-winmail-opener/libexec/venv/bin/python" ]; then
+    # First try the venv in the opt directory
+    VENV_PYTHON="/usr/local/opt/py-winmail-opener/libexec/venv/bin/python"
+elif [ -f "/usr/local/opt/python@3.10/bin/python3.10" ]; then
+    # Try Homebrew's Python 3.10
+    VENV_PYTHON="/usr/local/opt/python@3.10/bin/python3.10"
+else
+    # Fallback to system Python
+    VENV_PYTHON=$(which python3)
+fi
+
+# If the script doesn't exist at the expected location, try to find it
+if [ ! -f "$WINMAIL_SCRIPT" ]; then
+    # Try the original install location first
+    ORIGINAL_SCRIPT="{winmail_script}"
+    if [ -f "$ORIGINAL_SCRIPT" ]; then
+        WINMAIL_SCRIPT="$ORIGINAL_SCRIPT"
+    else
+        # Find the newest version in the Cellar
+        FOUND_SCRIPT=$(find /usr/local/Cellar/py-winmail-opener -name 'winmail_opener.py' | head -1)
+        if [ ! -z "$FOUND_SCRIPT" ]; then
+            WINMAIL_SCRIPT="$FOUND_SCRIPT"
+        fi
+    fi
+fi
+
+echo "Using Python: $VENV_PYTHON" >> "$LOG_FILE"
+echo "Using script: $WINMAIL_SCRIPT" >> "$LOG_FILE"
+
 # Execute the Python script with the file
-"{venv_python}" "{winmail_script}" "$FILEPATH" 2>&1 | tee -a "$LOG_FILE"
+"$VENV_PYTHON" "$WINMAIL_SCRIPT" "$FILEPATH" 2>&1 | tee -a "$LOG_FILE"
 
 # Notify the user
 osascript -e 'display notification "Winmail.dat file processed. See your Downloads folder for extracted attachments." with title "WinmailOpener"'
@@ -138,6 +173,21 @@ exit 0
         try:
             # Try to get Homebrew prefix
             brew_prefix = subprocess.check_output(["brew", "--prefix"], text=True).strip()
+            
+            # Create the opt directory structure if it doesn't exist
+            opt_dir = os.path.join(brew_prefix, "opt/py-winmail-opener/libexec")
+            os.makedirs(opt_dir, exist_ok=True)
+            
+            # Copy handler_script to opt directory for version independence
+            opt_handler_path = os.path.join(opt_dir, "winmail_handler.sh")
+            shutil.copy2(handler_script_path, opt_handler_path)
+            os.chmod(opt_handler_path, 0o755)
+            
+            # Copy winmail_opener.py to opt directory for version independence
+            opt_script_path = os.path.join(opt_dir, "winmail_opener.py")
+            shutil.copy2(winmail_script, opt_script_path)
+            
+            # Set the regular app path
             app_path = os.path.join(brew_prefix, "opt/py-winmail-opener/share/WinmailOpener.app")
             # Ensure the directory exists
             os.makedirs(os.path.dirname(app_path), exist_ok=True)
@@ -154,17 +204,46 @@ exit 0
     # Create temp AppleScript file
     applescript_path = os.path.join(script_dir, "winmail_opener.applescript")
     with open(applescript_path, "w") as f:
-        f.write(f"""
+        f.write("""
 -- Simple Winmail.dat file handler
 -- This script handles opening .dat files without any launch agents
 
 on open theFiles
     set filePath to POSIX path of (item 1 of theFiles)
-    do shell script "{handler_script_path} '" & filePath & "'"
+    
+    -- First, try to find the handler script in the Homebrew opt directory (version-independent)
+    set homebrewHandler to "/usr/local/opt/py-winmail-opener/libexec/winmail_handler.sh"
+    
+    -- Use a do shell script that first checks if the file exists
+    set handlerExists to do shell script "[ -f '" & homebrewHandler & "' ] && echo 'yes' || echo 'no'"
+    
+    if handlerExists is "yes" then
+        do shell script "'" & homebrewHandler & "' '" & filePath & "'"
+    else
+        -- Fallback to original handler script path if it exists
+        set originalHandler to "{handler_script_path}"
+        set originalExists to do shell script "[ -f '" & originalHandler & "' ] && echo 'yes' || echo 'no'"
+        
+        if originalExists is "yes" then
+            do shell script "'" & originalHandler & "' '" & filePath & "'"
+        else
+            -- Fallback to discover the handler script dynamically
+            -- Find all possible winmail_handler.sh files in Homebrew Cellar
+            set possibleHandlers to paragraphs of (do shell script "find /usr/local/Cellar/py-winmail-opener -name 'winmail_handler.sh' 2>/dev/null || echo ''")
+            
+            if (count of possibleHandlers) > 0 and item 1 of possibleHandlers is not "" then
+                -- Use the first available handler script
+                do shell script "'" & (item 1 of possibleHandlers) & "' '" & filePath & "'"
+            else
+                -- Ultimate fallback if no handler script is found
+                display dialog "Error: Could not find the winmail_handler.sh script." buttons {"OK"} default button "OK" with title "WinmailOpener Error"
+            end if
+        end if
+    end if
 end open
 
 on run
-    display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {{"OK"}} default button "OK" with title "WinmailOpener"
+    display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {"OK"} default button "OK" with title "WinmailOpener"
 end run
 """)
     

@@ -136,6 +136,10 @@ jobs:
           # Update version in winmail_opener.py
           sed -i "s/__version__ = \"$current_version\"/__version__ = \"$new_version\"/g" winmail_opener.py || { echo "Failed to update version in winmail_opener.py"; exit 1; }
           
+          # Add a note in the install.py script when it's for a new version
+          # This is to make it clear the update includes the version-independent path fix
+          sed -i "/WinmailOpener Installation/a # Version $new_version with version-independent paths" install.py || { echo "Warning: Could not add version note to install.py"; }
+          
           # Verify updates
           echo "setup.py after update:"
           grep "version=" setup.py
@@ -147,7 +151,7 @@ jobs:
           git config user.email "actions@github.com"
           
           # Commit version bump
-          git add setup.py winmail_opener.py
+          git add setup.py winmail_opener.py install.py
           git commit -m "[Automated] Bump version to $new_version"
           git push
       
