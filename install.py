@@ -395,6 +395,7 @@ def main():
     homebrew_mode = args.homebrew_mode
     
     print("=== WinmailOpener Installation ===")
+# Version 2.0.1 with version-independent paths
     print("This script will:")
     print("1. Create a virtual environment and install dependencies")
     print("2. Create a security-friendly AppleScript application for handling winmail.dat files")
