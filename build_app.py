@@ -99,7 +99,7 @@ def build_app_bundle(version, dev_mode=False):
     # Create Info.plist with proper file associations
     info_plist = {
         'CFBundleDisplayName': 'WinmailOpener',
-        'CFBundleExecutable': 'document_handler',  # Use our AppleScript handler as the main executable
+        'CFBundleExecutable': 'WinmailOpener',  # Use original shell script
         'CFBundleIdentifier': 'com.github.jsbattig.winmailopener',
         'CFBundleName': 'WinmailOpener',
         'CFBundleVersion': version,
@@ -117,19 +117,8 @@ def build_app_bundle(version, dev_mode=False):
                 'CFBundleTypeName': 'Winmail.dat File',
                 'CFBundleTypeRole': 'Editor',
                 'LSHandlerRank': 'Owner',
-                'LSTypeIsPackage': False,
-                'CFBundleTypeIconFile': 'AppIcon.icns', 
-                'LSItemContentTypes': ['com.microsoft.winmail.dat']
-            }
-        ],
-        'UTExportedTypeDeclarations': [
-            {
-                'UTTypeIdentifier': 'com.microsoft.winmail.dat',
-                'UTTypeDescription': 'Microsoft Outlook Winmail.dat File',
-                'UTTypeConformsTo': ['public.data'],
-                'UTTypeTagSpecification': {
-                    'public.filename-extension': ['dat']
-                }
+                'LSItemContentTypes': ['public.data', 'com.microsoft.winmail.dat'],
+                'LSTypeIsPackage': False
             }
         ]
     }
@@ -150,7 +139,7 @@ def build_app_bundle(version, dev_mode=False):
         if os.path.exists(os.path.join(src_dir, script)):
             shutil.copy(os.path.join(src_dir, script), os.path.join(resources_dir, script))
     
-    # We'll still create the launcher script as a backup
+    # Create the improved launcher script
     print("Creating launcher script...")
     with open(os.path.join(macos_dir, 'WinmailOpener'), 'w') as f:
         f.write('''#!/bin/bash
@@ -160,39 +149,62 @@ RESOURCES="$DIR/../Resources"
 PYTHON="$RESOURCES/python/bin/python3"
 
 # Log file for debugging
-LOG_FILE=~/WinmailOpener_log.txt
+LOG_FILE=~/Library/Logs/WinmailOpener_log.txt
 
 # Log this execution
 echo "========================================" >> "$LOG_FILE"
-echo "WinmailOpener launcher script executed at $(date)" >> "$LOG_FILE"
+echo "WinmailOpener launched at $(date)" >> "$LOG_FILE"
+echo "Current directory: $(pwd)" >> "$LOG_FILE"
 echo "Arguments received: $@" >> "$LOG_FILE"
 
-# If this script is called with a file path, process it
+# Check if we have arguments from command line
 if [ $# -gt 0 ]; then
-    # Process the file
-    "$PYTHON" "$RESOURCES/winmail_opener.py" "$@" 2>&1 | tee -a "$LOG_FILE"
-    
-    # Notify the user
-    osascript -e 'display notification "Winmail.dat file processed. See your Downloads folder for extracted attachments." with title "WinmailOpener"'
+    # Process files passed directly
+    for file in "$@"; do
+        echo "Processing file from command line: $file" >> "$LOG_FILE"
+        "$PYTHON" "$RESOURCES/winmail_opener.py" "$file" 2>&1 | tee -a "$LOG_FILE"
+    done
 else
-    # Show a dialog if launched without arguments
-    osascript -e 'display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {"OK"} default button "OK" with title "WinmailOpener"'
+    # Check if we're being opened with a document via Open/Documents Apple event
+    # This approach uses a temp file to handle files dropped on the app icon
+    DROPPED_FILES="$HOME/Library/Logs/WinmailOpener_dropped_files.txt"
+    
+    # Get the most recently modified .dat files in the Downloads folder from the last 30 seconds
+    # This is a heuristic to handle files that were just downloaded or received in email
+    echo "Checking for recently modified .dat files..." >> "$LOG_FILE"
+    FOUND_FILES=$(find ~/Downloads -name "*.dat" -mtime -30s 2>/dev/null)
+    
+    if [ -n "$FOUND_FILES" ]; then
+        echo "Found recently modified .dat files:" >> "$LOG_FILE"
+        echo "$FOUND_FILES" >> "$LOG_FILE"
+        
+        # Process each found file
+        while IFS= read -r file; do
+            if [ -f "$file" ]; then
+                echo "Processing recent file: $file" >> "$LOG_FILE"
+                "$PYTHON" "$RESOURCES/winmail_opener.py" "$file" 2>&1 | tee -a "$LOG_FILE"
+                osascript -e "display notification \"Processed $file\" with title \"WinmailOpener\""
+            fi
+        done <<< "$FOUND_FILES"
+    else
+        # If no files found, show the dialog
+        echo "No arguments and no recent .dat files found, showing dialog" >> "$LOG_FILE"
+        osascript -e 'display dialog "Please double-click a winmail.dat file instead of launching this app directly." buttons {"OK"} default button "OK" with title "WinmailOpener"'
+    fi
 fi
 ''')
     
     # Make launcher executable
     os.chmod(os.path.join(macos_dir, 'WinmailOpener'), 0o755)
     
-    # Compile and add the AppleScript handler
-    print("Adding AppleScript document handler...")
+    # Add the file association fix script to Resources
+    print("Adding file association fix script...")
     src_dir = os.path.dirname(os.path.abspath(__file__))
-    applescript_source = os.path.join(src_dir, "document_handler.applescript")
-    applescript_target = os.path.join(macos_dir, "document_handler")
+    fix_script_source = os.path.join(src_dir, "fix_file_association.py")
+    fix_script_target = os.path.join(resources_dir, "fix_file_association.py")
     
-    if not compile_applescript(applescript_source, applescript_target):
-        print("Warning: Could not compile AppleScript. Using fallback method.")
-        # Copy the raw script as a fallback
-        shutil.copy(applescript_source, os.path.join(resources_dir, "document_handler.applescript"))
+    if os.path.exists(fix_script_source):
+        shutil.copy(fix_script_source, fix_script_target)
     
     # Create launcher symlink
     print("Creating command-line symlink...")
