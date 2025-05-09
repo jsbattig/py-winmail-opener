@@ -40,6 +40,46 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
+      # Add this step to check if this is an automated update
+      - name: Check if automated update
+        id: check_automated
+        run: |
+          commit_message=$(git log -1 --pretty=%B)
+          commit_author=$(git log -1 --pretty=%an)
+          
+          if [[ "$commit_author" == "GitHub Actions Bot" && "$commit_message" == *"[automated-submodule-update]"* ]]; then
+            echo "This is an automated submodule update, skipping release"
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "This is a manual update or regular commit, proceeding with release"
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+      
+      # Add cooldown period check
+      - name: Check cooldown period
+        id: check_cooldown
+        if: steps.check_automated.outputs.skip == 'false'
+        run: |
+          # Get timestamp of last workflow run (within last 10 minutes)
+          last_run=$(git log --since="10 minutes ago" --author="GitHub Actions Bot" --grep="Bump version to" --format="%at" | head -n 1)
+          
+          if [ -n "$last_run" ]; then
+            current_time=$(date +%s)
+            time_diff=$((current_time - last_run))
+            
+            # If less than 2 minutes (120 seconds), skip
+            if [ "$time_diff" -lt 120 ]; then
+              echo "Another release ran $time_diff seconds ago. Within cooldown period of 2 minutes."
+              echo "skip=true" >> $GITHUB_OUTPUT
+            else
+              echo "Outside cooldown period ($time_diff seconds since last run)."
+              echo "skip=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No recent runs found within the last 10 minutes."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -52,6 +92,7 @@ jobs:
       
       - name: Determine version bump type
         id: determine_bump_type
+        if: steps.check_automated.outputs.skip == 'false' && steps.check_cooldown.outputs.skip == 'false'
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             # Use manually specified bump type for workflow_dispatch
@@ -83,6 +124,7 @@ jobs:
       
       - name: Check if release should be skipped
         id: check_skip
+        if: steps.check_automated.outputs.skip == 'false' && steps.check_cooldown.outputs.skip == 'false'
         run: |
           if [ "$SKIP_RELEASE" == "true" ]; then
             echo "Skipping release creation as requested"
@@ -93,7 +135,7 @@ jobs:
       
       - name: Bump version
         id: bump_version
-        if: steps.check_skip.outputs.skip == 'false'
+        if: steps.check_automated.outputs.skip == 'false' && steps.check_cooldown.outputs.skip == 'false' && steps.check_skip.outputs.skip == 'false'
         run: |
           set -e  # Exit immediately if any command fails
           
@@ -156,7 +198,7 @@ jobs:
           git push
       
       - name: Create Tag
-        if: steps.check_skip.outputs.skip == 'false'
+        if: steps.check_automated.outputs.skip == 'false' && steps.check_cooldown.outputs.skip == 'false' && steps.check_skip.outputs.skip == 'false'
         run: |
           new_version="${{ steps.bump_version.outputs.new_version }}"
           git tag -a "v$new_version" -m "Release v$new_version"
@@ -164,7 +206,7 @@ jobs:
       
       - name: Create GitHub Release
         id: create_release
-        if: steps.check_skip.outputs.skip == 'false'
+        if: steps.check_automated.outputs.skip == 'false' && steps.check_cooldown.outputs.skip == 'false' && steps.check_skip.outputs.skip == 'false'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.bump_version.outputs.new_version }}

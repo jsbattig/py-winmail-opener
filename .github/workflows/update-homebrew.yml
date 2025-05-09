@@ -131,3 +131,63 @@ jobs:
             echo "Current formula content:"
             cat py-winmail-opener.rb
           fi
+  
+  # Add new job to update the submodule pointer
+  update-submodule:
+    needs: update-homebrew-formula
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          fetch-depth: 0
+        
+      - name: Check cooldown period
+        id: check_cooldown
+        run: |
+          # Get timestamp of last submodule update (within last 10 minutes)
+          last_run=$(git log --since="10 minutes ago" --author="GitHub Actions Bot" --grep="[automated-submodule-update]" --format="%at" | head -n 1)
+          
+          if [ -n "$last_run" ]; then
+            current_time=$(date +%s)
+            time_diff=$((current_time - last_run))
+            
+            # If less than 2 minutes (120 seconds), skip
+            if [ "$time_diff" -lt 120 ]; then
+              echo "Another submodule update ran $time_diff seconds ago. Within cooldown period of 2 minutes."
+              echo "skip=true" >> $GITHUB_OUTPUT
+              exit 0
+            else
+              echo "Outside cooldown period ($time_diff seconds since last run)."
+              echo "skip=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No recent runs found within the last 10 minutes."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Update submodule
+        if: steps.check_cooldown.outputs.skip != 'true'
+        run: |
+          # Configure git
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          # Update the submodule
+          cd homebrew
+          git fetch
+          git checkout origin/master
+          cd ..
+          
+          # Commit and push the changes with a special tag
+          git add homebrew
+          git commit -m "Update homebrew submodule pointer [automated-submodule-update]"
+          
+          # Try to push with error handling
+          git push || {
+            echo "Push failed. Fetching latest changes and trying again..."
+            git fetch
+            git rebase origin/master
+            git push
+          }
