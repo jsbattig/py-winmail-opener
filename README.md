@@ -26,24 +26,7 @@ Microsoft Exchange and Outlook generate Winmail.dat attachments for several reas
 
 Instead of sending standard MIME attachments that all email clients can read, Outlook bundles everything into a single Winmail.dat file that only Microsoft products can natively interpret.
 
-### Email Clients with TNEF Compatibility Issues
-
-Many popular email clients cannot properly process Winmail.dat files, including:
-
-- **Spark** (macOS, iOS)
-- **Apple Mail**
-- **Mozilla Thunderbird**
-- **Gmail** (web interface)
-- **Yahoo Mail**
-- **ProtonMail**
-- **Airmail**
-- **Postbox**
-- **Mailbird**
-- **eM Client** (older versions)
-- **K-9 Mail** (Android)
-- **Most mobile email clients**
-
-If you're using any of these email clients and receive Winmail.dat attachments, you'll need a tool like py-winmail-opener to extract the actual content.
+If you're using an email client and receive Winmail.dat attachments, you'll need a tool like py-winmail-opener to extract the actual content.
 
 ## Features
 
@@ -183,12 +166,6 @@ Once you've set WinmailOpener.app as the default handler for .dat files, you can
 
 * tnefparse
 * chardet
-
-## Running Tests
-
-```
-python py-winmail-opener/test_winmail_opener.py
-```
 
 ## For Developers
 
