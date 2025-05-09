@@ -2,11 +2,55 @@
 
 A utility to extract attachments and email body from Winmail.dat files on macOS.
 
+## Understanding Winmail.dat Files
+
+### What are Winmail.dat files?
+
+Winmail.dat files are containers that use Microsoft's proprietary **Transport Neutral Encapsulation Format (TNEF)** to bundle email content. When you receive an email with a Winmail.dat attachment, it typically means:
+
+- The sender used Microsoft Outlook or Exchange
+- The email contains rich formatting, attachments, or Microsoft-specific features
+- Your email client can't natively process this proprietary format
+
+### Why Microsoft Outlook/Exchange Uses TNEF Format
+
+Microsoft Exchange and Outlook generate Winmail.dat attachments for several reasons:
+
+1. **Rich Formatting Support**: TNEF preserves Microsoft-specific rich text formatting, including custom fonts, tables, and embedded objects.
+
+2. **Exchange Server Default Behavior**: Particularly in older Exchange environments, messages are automatically encoded in TNEF format for internal communications.
+
+3. **RTF Format Selection**: When users select Rich Text Format (RTF) instead of HTML or plain text, Outlook automatically uses TNEF.
+
+4. **Proprietary Features**: TNEF supports Outlook-specific features like voting buttons and meeting requests.
+
+Instead of sending standard MIME attachments that all email clients can read, Outlook bundles everything into a single Winmail.dat file that only Microsoft products can natively interpret.
+
+### Email Clients with TNEF Compatibility Issues
+
+Many popular email clients cannot properly process Winmail.dat files, including:
+
+- **Spark** (macOS, iOS)
+- **Apple Mail**
+- **Mozilla Thunderbird**
+- **Gmail** (web interface)
+- **Yahoo Mail**
+- **ProtonMail**
+- **Airmail**
+- **Postbox**
+- **Mailbird**
+- **eM Client** (older versions)
+- **K-9 Mail** (Android)
+- **Most mobile email clients**
+
+If you're using any of these email clients and receive Winmail.dat attachments, you'll need a tool like py-winmail-opener to extract the actual content.
+
 ## Features
 
 * Automatically extracts attachments to `~/Downloads`
-* Opens email body with TextEdit.app
-* Uses a simple, security-friendly AppleScript approach for file associations
+* Converts email body to HTML and opens it in your default web browser
+* Displays convenient links to all extracted attachments at the bottom of the HTML page
+* Uses a simple AppleScript approach for file associations
 
 ## Installation and Uninstallation
 
@@ -25,9 +69,9 @@ brew install py-winmail-opener
 This will automatically:
 1. Install all dependencies
 2. Create the AppleScript application for handling winmail.dat files
-3. Set up file associations if possible
+3. Set up file associations
 
-### Installation
+### Manual Installation
 
 ```
 # Install dependencies and create application bundle
@@ -38,7 +82,9 @@ The installer will:
 1. Create a dedicated virtual environment for dependencies
 2. Install required packages (tnefparse, chardet)
 3. Create a security-friendly AppleScript application in your ~/Applications folder
-4. Set up the file association with .dat files if possible
+4. Set up the file association with .dat files
+
+Note: If you receive antivirus warnings during installation or usage, use your antivirus software's trust function to allow the application.
 
 ### Uninstallation
 
@@ -97,32 +143,13 @@ python py-winmail-opener/uninstall.py --force
 python py-winmail-opener/uninstall.py --homebrew-mode
 ```
 
-### Setting Up File Associations
-
-After installation, you'll need to associate .dat files with the app **once**:
-1. Right-click on a winmail.dat file
-2. Select "Open With" > "Other..."
-3. Navigate to ~/Applications, select WinmailOpener.app
-4. Check "Always Open With" to make this the default for all .dat files
-
-After this one-time setup, you can double-click any winmail.dat file to automatically extract its contents.
-
 ### How It Works
 
 The application uses a simple AppleScript handler to receive file open events from macOS, which then calls a Python script to process the winmail.dat file. This approach:
 
-1. Avoids triggering security warnings from antivirus software
-2. Works reliably with double-clicked files
-3. Provides desktop notifications when files are processed
-4. Logs all activity to ~/WinmailOpener_log.txt for troubleshooting
-
-### Manual File Association
-
-If the automatic file association doesn't work, you can manually set it:
-1. Right-click on a .dat file
-2. Select "Get Info"
-3. Under "Open with:", select WinmailOpener.app
-4. Click "Change All..." to apply to all .dat files
+1. Works reliably with double-clicked files
+2. Provides desktop notifications when files are processed
+3. Logs all activity to ~/WinmailOpener_log.txt for troubleshooting
 
 ## Usage
 
@@ -149,7 +176,8 @@ python py-winmail-opener/winmail_opener.py <winmail_dat_file>
 
 Once you've set WinmailOpener.app as the default handler for .dat files, you can simply double-click any .dat file and:
 1. All attachments will be extracted to `~/Downloads`
-2. If an email body is present, it will open in TextEdit.app
+2. If an email body is present, it will be converted to HTML and opened in your default web browser
+3. The HTML view includes clickable links to all extracted attachments at the bottom of the page
 
 ## Dependencies
 
