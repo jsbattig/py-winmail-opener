@@ -248,45 +248,4 @@ This project includes two GitHub Actions workflows:
 1. **auto-release.yml**: Creates new releases based on commit messages
 2. **update-homebrew.yml**: Updates the Homebrew formula when releases are published
 
-To set up these workflows:
-
-1. Create a Personal Access Token with `repo` scope
-2. Add it as a repository secret named `HOMEBREW_TAP_TOKEN` in your GitHub repository settings
-3. Ensure the token has write access to the homebrew-winmail repository
-
-Once configured, the entire release process will be automated.
-
-### Creating a Manual Release
-
-While the automated system handles most release scenarios, you can still create a release manually if needed:
-
-1. Update the version in `setup.py` and `winmail_opener.py`
-2. Create a tagged release on GitHub:
-   ```bash
-   git tag -a v1.0.0 -m "Version 1.0.0"
-   git push origin v1.0.0
-   ```
-3. Create a release on GitHub through the web interface
-
-### Updating the Homebrew Formula
-
-The Homebrew formula is located in `py-winmail-opener.rb`. When updating:
-
-1. Make sure `url` points to the latest release
-2. Update the `sha256` with the correct checksum
-3. Update the version in the test assertion if version number changed
-4. If dependencies changed, update the `depends_on` section
-
-### Creating the Homebrew Tap Repository
-
-To make your formula available via Homebrew:
-
-1. Create a new GitHub repository named `homebrew-winmail`
-2. Add the `py-winmail-opener.rb` formula file to this repository
-3. Users can then install with:
-   ```bash
-   brew tap jsbattig/winmail
-   brew install py-winmail-opener
-   ```
-
 For more information, see [Homebrew's documentation on taps](https://docs.brew.sh/Taps).
