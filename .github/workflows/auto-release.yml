@@ -25,7 +25,20 @@ on:
         default: false
 
 jobs:
+  # Add a job to wait for CI to complete
+  wait-for-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI workflow
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'test'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+
   bump-version-and-release:
+    needs: wait-for-ci
     runs-on: ubuntu-latest
     permissions:
       contents: write

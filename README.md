@@ -224,5 +224,33 @@ This project includes two GitHub Actions workflows:
 
 1. **auto-release.yml**: Creates new releases based on commit messages
 2. **update-homebrew.yml**: Updates the Homebrew formula when releases are published
+3. **ci.yml**: Runs syntax checks and tests on every push and pull request
 
 For more information, see [Homebrew's documentation on taps](https://docs.brew.sh/Taps).
+
+### Development Tools
+
+This project includes several tools to help maintain code quality:
+
+1. **Linting and Testing Scripts**:
+   - `scripts/lint_python.sh`: Checks Python code for syntax and style issues
+   - `scripts/lint_ruby.sh`: Checks Ruby code for syntax and style issues
+   - `scripts/run_tests.sh`: Runs the test suite
+   - `scripts/pre-commit.sh`: Runs all checks before committing
+
+2. **Setting Up the Development Environment**:
+
+```bash
+# Install all dependencies and set up linters
+./scripts/setup_dev_environment.sh
+```
+
+3. **Pre-commit Checks**:
+
+Before committing, you can run all checks with:
+
+```bash
+./scripts/pre-commit.sh
+```
+
+This will ensure your code meets the project's quality standards.
