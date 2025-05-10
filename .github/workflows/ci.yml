@@ -9,6 +9,8 @@ on:
 jobs:
   syntax-check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       syntax_ok: ${{ steps.python_lint.outcome == 'success' && steps.ruby_lint.outcome == 'success' }}
     steps:
@@ -29,9 +31,19 @@ jobs:
         run: |
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           pylint --disable=all --enable=syntax-error,undefined-variable,unused-import,unused-variable *.py
-          black --check .
-          isort --check .
+          # Format code with black and isort instead of just checking
+          black .
+          isort .
           mypy --ignore-missing-imports .
+          
+      - name: Commit formatted code
+        if: success()
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff --quiet && git diff --staged --quiet || git commit -m "Apply automatic code formatting [skip ci]"
+          git push
       
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
