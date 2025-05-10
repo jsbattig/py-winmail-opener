@@ -5,7 +5,6 @@ import sys
 import plistlib
 import shutil
 import tempfile
-import time
 import argparse
 
 def create_virtual_environment():
