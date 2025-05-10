@@ -82,5 +82,16 @@ jobs:
       - name: Run test suite
         id: run_tests
         run: |
-          chmod +x test/run_tests.sh
-          ./test/run_tests.sh
+          # Try the script in scripts directory first, then fall back to test directory
+          if [ -f "scripts/run_tests.sh" ]; then
+            chmod +x scripts/run_tests.sh
+            ./scripts/run_tests.sh
+          elif [ -f "test/run_tests.sh" ]; then
+            chmod +x test/run_tests.sh
+            ./test/run_tests.sh
+          else
+            echo "Error: Could not find run_tests.sh in either scripts/ or test/ directories"
+            ls -la scripts/
+            ls -la test/
+            exit 1
+          fi
