@@ -7,7 +7,7 @@ import subprocess  # Used for opening the email body with the default text edito
 import sys  # Used for accessing command line arguments
 
 # Version information - keep in sync with setup.py
-__version__ = "2.0.21"
+__version__ = "2.0.22"
 
 # Configure logging first before any imports that might use it
 logging.basicConfig(
