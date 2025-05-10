@@ -243,7 +243,7 @@ This project includes several tools to help maintain code quality:
 1. **Linting and Testing Scripts**:
    - `scripts/lint_python.sh`: Checks Python code for syntax and style issues
    - `scripts/lint_ruby.sh`: Checks Ruby code for syntax and style issues
-   - `scripts/run_tests.sh`: Runs the test suite
+   - `test/run_tests.sh`: Runs the test suite
    - `scripts/pre-commit.sh`: Runs all checks before committing
 
 2. **Setting Up the Development Environment**:

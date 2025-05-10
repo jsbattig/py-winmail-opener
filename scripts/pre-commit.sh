@@ -42,8 +42,8 @@ fi
 
 # Run tests
 echo "Running tests..."
-if [ -f "./scripts/run_tests.sh" ]; then
-    ./scripts/run_tests.sh || TESTS_EXIT=$?
+if [ -f "./test/run_tests.sh" ]; then
+    ./test/run_tests.sh || TESTS_EXIT=$?
 else
     echo "Test script not found."
     TESTS_EXIT=1
