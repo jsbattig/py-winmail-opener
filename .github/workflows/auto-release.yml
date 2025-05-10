@@ -1,12 +1,10 @@
 name: Automatic Release
 
 on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '**.md'
-      - '.github/workflows/update-homebrew.yml'
+  workflow_run:
+    workflows: ["Continuous Integration"]
+    branches: [master]
+    types: [completed]
   workflow_dispatch:
     inputs:
       bump_type:
@@ -25,20 +23,9 @@ on:
         default: false
 
 jobs:
-  # Add a job to wait for CI to complete
-  wait-for-ci:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for CI workflow
-        uses: lewagon/wait-on-check-action@v1.3.1
-        with:
-          ref: ${{ github.ref }}
-          check-name: 'test'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
-
   bump-version-and-release:
-    needs: wait-for-ci
+    # Only run if the CI workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
