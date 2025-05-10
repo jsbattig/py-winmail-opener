@@ -1,0 +1,2 @@
+This is a placeholder for a sample PDF document.
+In a real implementation, you would replace this with an actual PDF file.
