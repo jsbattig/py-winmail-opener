@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: write
     outputs:
-      python_lint_ok: ${{ success() }}
+      python_lint_ok: ${{ steps.python_lint.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v3
       
@@ -48,7 +48,7 @@ jobs:
   ruby-lint:
     runs-on: ubuntu-latest
     outputs:
-      ruby_lint_ok: ${{ success() }}
+      ruby_lint_ok: ${{ steps.ruby_lint.outcome == 'success' }}
     steps:
       - uses: actions/checkout@v3
       
