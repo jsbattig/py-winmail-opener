@@ -6,7 +6,7 @@
 [![Tests](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml/badge.svg?job=test)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml)
 [![Release Status](https://github.com/jsbattig/py-winmail-opener/actions/workflows/auto-release.yml/badge.svg)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/auto-release.yml)
 [![Homebrew Update](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml/badge.svg)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml)
-[![Submodule Update](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml/badge.svg?job=update-submodule&label=Submodule%20Update)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml)
+[![Submodule Update](https://img.shields.io/github/actions/workflow/status/jsbattig/py-winmail-opener/update-homebrew.yml?branch=master&label=Submodule%20Update&event=workflow_dispatch)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml)
 
 A utility to extract attachments and email body from Winmail.dat files on macOS.
 
