@@ -1,5 +1,13 @@
 # py-winmail-opener
 
+[![CI Status](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml/badge.svg)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml)
+[![Python Linting](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml/badge.svg?job=python-lint)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml)
+[![Ruby Linting](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml/badge.svg?job=ruby-lint)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml)
+[![Tests](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml/badge.svg?job=test)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/ci.yml)
+[![Release Status](https://github.com/jsbattig/py-winmail-opener/actions/workflows/auto-release.yml/badge.svg)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/auto-release.yml)
+[![Homebrew Update](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml/badge.svg)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml)
+[![Submodule Update](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml/badge.svg?job=update-submodule)](https://github.com/jsbattig/py-winmail-opener/actions/workflows/update-homebrew.yml)
+
 A utility to extract attachments and email body from Winmail.dat files on macOS.
 
 ## Understanding Winmail.dat Files

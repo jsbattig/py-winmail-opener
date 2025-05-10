@@ -7,12 +7,12 @@ on:
     branches: [ master ]
 
 jobs:
-  syntax-check:
+  python-lint:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
-      syntax_ok: ${{ steps.python_lint.outcome == 'success' && steps.ruby_lint.outcome == 'success' }}
+      python_lint_ok: ${{ success() }}
     steps:
       - uses: actions/checkout@v3
       
@@ -44,6 +44,13 @@ jobs:
           git add .
           git diff --quiet && git diff --staged --quiet || git commit -m "Apply automatic code formatting [skip ci]"
           git push
+
+  ruby-lint:
+    runs-on: ubuntu-latest
+    outputs:
+      ruby_lint_ok: ${{ success() }}
+    steps:
+      - uses: actions/checkout@v3
       
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -60,8 +67,8 @@ jobs:
           rubocop homebrew/*.rb --only Syntax,Lint
   
   test:
-    needs: syntax-check
-    if: needs.syntax-check.outputs.syntax_ok == 'true'
+    needs: [python-lint, ruby-lint]
+    if: needs.python-lint.outputs.python_lint_ok == 'true' && needs.ruby-lint.outputs.ruby_lint_ok == 'true'
     runs-on: macos-latest
     outputs:
       tests_passed: ${{ steps.run_tests.outcome == 'success' }}
