@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
+import argparse
+import glob
 import os
 import shutil
 import subprocess
-import argparse
-import glob
+
 
 def uninstall_app(force=False):
     """
@@ -11,12 +12,12 @@ def uninstall_app(force=False):
     """
     app_paths = [
         os.path.expanduser("~/Applications/WinmailOpener.app"),
-        "/Applications/WinmailOpener.app"  # Check system Applications directory too
+        "/Applications/WinmailOpener.app",  # Check system Applications directory too
     ]
-    
+
     success = True
     app_found = False
-    
+
     for app_path in app_paths:
         if os.path.exists(app_path):
             app_found = True
@@ -27,23 +28,26 @@ def uninstall_app(force=False):
             except Exception as e:
                 print(f"Error removing application from {app_path}: {e}")
                 success = False
-    
+
     if not app_found and not force:
-        print("Application not found in Applications folders. It may have been removed already.")
-    
+        print(
+            "Application not found in Applications folders. It may have been removed already."
+        )
+
     return success
+
 
 def remove_file_associations():
     """
     Remove file associations for .dat files.
     """
     print("Removing file associations...")
-    
+
     try:
         # Try using duti first
         subprocess.run(["which", "duti"], check=True, stdout=subprocess.DEVNULL)
         print("Using duti to remove file associations...")
-        
+
         # This will reset the association to the system default
         subprocess.run(["duti", "-s", "com.apple.finder", ".dat", "all"], check=False)
         print("File associations removed using duti.")
@@ -51,26 +55,40 @@ def remove_file_associations():
         print("duti not available, using macOS native methods...")
         try:
             # This command removes the specific handler entries
-            subprocess.run([
-                "defaults", "delete", "com.apple.LaunchServices/com.apple.launchservices.secure", 
-                "LSHandlers"
-            ], check=False)
+            subprocess.run(
+                [
+                    "defaults",
+                    "delete",
+                    "com.apple.LaunchServices/com.apple.launchservices.secure",
+                    "LSHandlers",
+                ],
+                check=False,
+            )
             print("Attempted to remove file associations with defaults command.")
         except Exception as e:
             print(f"Warning: Could not fully remove file associations: {e}")
             print("You may need to manually reassign .dat files in Finder if needed.")
-    
+
     # Reset Launch Services database
     try:
-        subprocess.run([
-            "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
-            "-kill", "-r", "-domain", "local", "-domain", "user"
-        ], check=False)
+        subprocess.run(
+            [
+                "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
+                "-kill",
+                "-r",
+                "-domain",
+                "local",
+                "-domain",
+                "user",
+            ],
+            check=False,
+        )
         print("Launch Services database has been reset.")
     except Exception as e:
         print(f"Warning: Could not reset Launch Services database: {e}")
-    
+
     return True
+
 
 def clean_handler_script():
     """
@@ -78,16 +96,16 @@ def clean_handler_script():
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     handler_script = os.path.join(script_dir, "winmail_handler.sh")
-    
+
     # Also check for handler scripts in Homebrew locations
     homebrew_script_paths = [
         "/usr/local/opt/py-winmail-opener/libexec/winmail_handler.sh",  # Version-independent path
         # Search for scripts in old Cellar locations
-        *glob.glob("/usr/local/Cellar/py-winmail-opener/*/libexec/winmail_handler.sh")
+        *glob.glob("/usr/local/Cellar/py-winmail-opener/*/libexec/winmail_handler.sh"),
     ]
-    
+
     all_scripts = [handler_script] + homebrew_script_paths
-    
+
     for script_path in all_scripts:
         if os.path.exists(script_path):
             print(f"Removing handler script: {script_path}")
@@ -96,8 +114,10 @@ def clean_handler_script():
                 try:
                     os.chmod(script_path, 0o666)
                 except Exception as e:
-                    print(f"Warning: Could not update permissions on handler script: {e}")
-                    
+                    print(
+                        f"Warning: Could not update permissions on handler script: {e}"
+                    )
+
                 os.remove(script_path)
                 print(f"Handler script at {script_path} removed successfully.")
             except Exception as e:
@@ -105,8 +125,9 @@ def clean_handler_script():
                 # Continue with other scripts even if one fails
         else:
             print(f"Handler script not found at {script_path}.")
-    
+
     return True
+
 
 def remove_test_files():
     """
@@ -123,8 +144,9 @@ def remove_test_files():
             return False
     else:
         print("Test file not found on Desktop. It may have been removed already.")
-    
+
     return True
+
 
 def remove_virtual_environment():
     """
@@ -132,7 +154,7 @@ def remove_virtual_environment():
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
     venv_dir = os.path.join(script_dir, "venv")
-    
+
     if os.path.exists(venv_dir):
         print(f"Removing virtual environment: {venv_dir}")
         try:
@@ -143,8 +165,9 @@ def remove_virtual_environment():
             return False
     else:
         print("Virtual environment not found. It may have been removed already.")
-    
+
     return True
+
 
 def remove_log_files():
     """
@@ -152,7 +175,7 @@ def remove_log_files():
     """
     log_file = os.path.expanduser("~/WinmailOpener_log.txt")
     debug_log = os.path.expanduser("~/winmail_opener_debug.log")
-    
+
     for file_path in [log_file, debug_log]:
         if os.path.exists(file_path):
             print(f"Removing log file: {file_path}")
@@ -161,8 +184,9 @@ def remove_log_files():
                 print(f"Log file {os.path.basename(file_path)} removed successfully.")
             except Exception as e:
                 print(f"Error removing log file {file_path}: {e}")
-    
+
     return True
+
 
 def remove_homebrew_files(force=False):
     """
@@ -171,23 +195,20 @@ def remove_homebrew_files(force=False):
     # Potential Homebrew Cellar directories
     cellar_paths = [
         "/usr/local/Cellar/py-winmail-opener",
-        "/opt/homebrew/Cellar/py-winmail-opener"
+        "/opt/homebrew/Cellar/py-winmail-opener",
     ]
-    
+
     # Potential binary wrapper paths
-    bin_paths = [
-        "/usr/local/bin/winmail-opener",
-        "/opt/homebrew/bin/winmail-opener"
-    ]
-    
+    bin_paths = ["/usr/local/bin/winmail-opener", "/opt/homebrew/bin/winmail-opener"]
+
     # Potential opt directories
     opt_paths = [
         "/usr/local/opt/py-winmail-opener",
-        "/opt/homebrew/opt/py-winmail-opener"
+        "/opt/homebrew/opt/py-winmail-opener",
     ]
-    
+
     success = True
-    
+
     # First, try to fix permissions on problematic files to prevent apply2files errors
     try:
         # Fix permissions in any existing Cellar directories
@@ -195,7 +216,9 @@ def remove_homebrew_files(force=False):
             if os.path.exists(cellar_path):
                 print(f"Fixing permissions in Homebrew Cellar directory: {cellar_path}")
                 # Find all shell scripts and fix their permissions
-                shell_scripts = glob.glob(os.path.join(cellar_path, "**/*.sh"), recursive=True)
+                shell_scripts = glob.glob(
+                    os.path.join(cellar_path, "**/*.sh"), recursive=True
+                )
                 for script in shell_scripts:
                     try:
                         if os.path.exists(script):
@@ -204,7 +227,7 @@ def remove_homebrew_files(force=False):
                         print(f"Warning: Could not update permissions on {script}: {e}")
     except Exception as e:
         print(f"Warning: Error while fixing permissions: {e}")
-    
+
     # Clean up Cellar directories
     found_cellar = False
     for cellar_path in cellar_paths:
@@ -223,32 +246,38 @@ def remove_homebrew_files(force=False):
                             print(f"Error removing directory {version_dir}: {e}")
                             # Try removing files one by one
                             try:
-                                for root, dirs, files in os.walk(version_dir, topdown=False):
+                                for root, dirs, files in os.walk(
+                                    version_dir, topdown=False
+                                ):
                                     for file in files:
                                         file_path = os.path.join(root, file)
                                         try:
                                             os.chmod(file_path, 0o777)
                                             os.remove(file_path)
                                         except Exception as e2:
-                                            print(f"Could not remove file {file_path}: {e2}")
+                                            print(
+                                                f"Could not remove file {file_path}: {e2}"
+                                            )
                                     for dir in dirs:
                                         dir_path = os.path.join(root, dir)
                                         try:
                                             os.rmdir(dir_path)
                                         except Exception as e2:
-                                            print(f"Could not remove directory {dir_path}: {e2}")
+                                            print(
+                                                f"Could not remove directory {dir_path}: {e2}"
+                                            )
                             except Exception as e3:
                                 print(f"Error during manual cleanup: {e3}")
-                
+
                 # Try to remove the main directory if empty
                 if os.path.exists(cellar_path) and not os.listdir(cellar_path):
                     os.rmdir(cellar_path)
-                
+
                 print(f"Homebrew Cellar directory removed successfully.")
             except Exception as e:
                 print(f"Error removing Homebrew Cellar directory: {e}")
                 success = False
-    
+
     # Clean up opt directories
     for opt_path in opt_paths:
         if os.path.exists(opt_path):
@@ -262,16 +291,16 @@ def remove_homebrew_files(force=False):
                             os.chmod(file_path, 0o777)
                         except Exception:
                             pass
-                
+
                 shutil.rmtree(opt_path)
                 print(f"Homebrew opt directory removed successfully.")
             except Exception as e:
                 print(f"Error removing Homebrew opt directory: {e}")
                 success = False
-    
+
     if not found_cellar and not force:
         print("No Homebrew Cellar directory found for py-winmail-opener.")
-    
+
     # Clean up binary wrappers
     found_bin = False
     for bin_path in bin_paths:
@@ -284,70 +313,86 @@ def remove_homebrew_files(force=False):
             except Exception as e:
                 print(f"Error removing Homebrew binary wrapper: {e}")
                 success = False
-    
+
     if not found_bin and not force:
         print("No Homebrew binary wrapper found for winmail-opener.")
-    
+
     return success
+
 
 def main():
     """
     Main function to handle the uninstallation process.
     """
     parser = argparse.ArgumentParser(description="Uninstall Winmail.dat Opener")
-    parser.add_argument("--keep-venv", action="store_true", help="Keep the virtual environment")
+    parser.add_argument(
+        "--keep-venv", action="store_true", help="Keep the virtual environment"
+    )
     parser.add_argument("--keep-logs", action="store_true", help="Keep log files")
-    parser.add_argument("--homebrew-mode", action="store_true", help="Run in Homebrew uninstallation mode")
-    parser.add_argument("--force", action="store_true", help="Force removal even if components are not found")
+    parser.add_argument(
+        "--homebrew-mode",
+        action="store_true",
+        help="Run in Homebrew uninstallation mode",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force removal even if components are not found",
+    )
     args = parser.parse_args()
-    
+
     print("=== Winmail.dat Opener Uninstaller ===")
     print("This script will remove Winmail.dat Opener components from your system.")
-    
+
     success = True
-    
+
     # Step 1: Remove the application bundle
     if not uninstall_app(args.force):
         success = False
-        
+
     # Step 1b: Remove Homebrew files if in homebrew mode or if explicitly requested
     if args.homebrew_mode or args.force:
         print("\nDetected Homebrew installation mode. Cleaning up Homebrew files...")
         if not remove_homebrew_files(args.force):
             success = False
-    
+
     # Step 2: Remove file associations
     if not remove_file_associations():
         success = False
-    
+
     # Step 3: Clean up handler script
     if not clean_handler_script():
         success = False
-    
+
     # Step 4: Remove test files
     if not remove_test_files():
         success = False
-    
+
     # Step 5: Remove virtual environment (unless --keep-venv is specified)
     if not args.keep_venv:
         if not remove_virtual_environment():
             success = False
     else:
         print("Keeping virtual environment as requested.")
-    
+
     # Step 6: Remove log files (unless --keep-logs is specified)
     if not args.keep_logs:
         if not remove_log_files():
             success = False
     else:
         print("Keeping log files as requested.")
-    
+
     if success:
         print("\nUninstallation completed successfully!")
     else:
-        print("\nUninstallation completed with some errors. Please check the messages above.")
-    
-    print("\nNote: If you want to reinstall the application, simply run install.py again.")
+        print(
+            "\nUninstallation completed with some errors. Please check the messages above."
+        )
+
+    print(
+        "\nNote: If you want to reinstall the application, simply run install.py again."
+    )
+
 
 if __name__ == "__main__":
     main()

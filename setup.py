@@ -30,5 +30,5 @@ setuptools.setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
 )

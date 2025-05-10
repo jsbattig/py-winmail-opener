@@ -4,12 +4,14 @@ Create a sample TNEF file for testing the HTML viewer
 """
 
 import os
+
 import tnefparse
 from tnefparse.tnef import TNEF, TNEFAttachment
 
+
 def create_sample_viewer_html():
     """Create a sample HTML view that shows what our winmail.dat viewer would display"""
-    
+
     # Sample email content
     html_content = """<!DOCTYPE html>
 <html>
@@ -142,18 +144,20 @@ def create_sample_viewer_html():
 </body>
 </html>
 """
-    
+
     # Save sample HTML
     temp_html_file = "/tmp/winmail_sample_view.html"
     with open(temp_html_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-        
+
     print(f"Sample HTML created at {temp_html_file}")
-    
+
     # Open with default browser
     import subprocess
+
     subprocess.call(["open", temp_html_file])
     print("Opened sample view in browser")
+
 
 if __name__ == "__main__":
     create_sample_viewer_html()
